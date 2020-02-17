@@ -113,6 +113,10 @@ See all the options
 
 ```
 micro --help
+
+#Generate app standard project file
+micro new --type=app --namespace=microservice.yy.maigc --alias=magic
+
 ```
 
 See the [docs](https://micro.mu/docs/) for detailed information on the architecture, installation and use of the platform.
