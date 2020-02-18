@@ -8,6 +8,7 @@ require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1 // indirect
 	github.com/cloudflare/cloudflare-go v0.10.9
+	github.com/eknkc/basex v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/go-acme/lego/v3 v3.3.0
 	github.com/golang/protobuf v1.3.2
@@ -18,7 +19,6 @@ require (
 	github.com/hako/branca v0.0.0-20180808000428-10b799466ada
 	github.com/micro/cli v0.2.0
 	github.com/micro/go-micro v1.18.0
-	github.com/micro/micro/v2 v2.0.0
 	github.com/miekg/dns v1.1.27
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/patrickmn/go-cache v2.1.0+incompatible
