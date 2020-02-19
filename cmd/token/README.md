@@ -29,3 +29,4 @@ EMAIL_DOMAIN=micro.mu
 ```
 
 The token server makes use of gmail smtp relay to send emails. Domain must be set to `micro.mu` for internal usage.
+
