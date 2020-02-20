@@ -86,7 +86,7 @@ func ReadLinesByBufIO(filename string) {
 
 func writeDataToFile(int64DataSlice []int64) {
 	t := time.Now()
-	f, err := os.OpenFile(outputFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm)
+	f, err := os.OpenFile(outputFileName, os.O_CREATE|os.O_WRONLY, os.ModePerm)
 
 	if err != nil {
 		fmt.Printf("failed to open file : %s ", err.Error())
@@ -94,8 +94,11 @@ func writeDataToFile(int64DataSlice []int64) {
 	}
 
 	defer f.Close()
-	w := bufio.NewWriter(f)
-
+	//100K buffer writer size,
+	//3.223659s
+	w := bufio.NewWriterSize(f, 1024*100)
+	//3.372287 s
+	//w := bufio.NewWriter(f)
 	for _, data := range int64DataSlice {
 		//print(">")
 		if _, err1 := f.Write([]byte(strconv.FormatInt(data, 10) + "\n")); err1 != nil {
