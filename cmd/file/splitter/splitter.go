@@ -58,7 +58,7 @@ func (s *state) setChunkFile(file *os.File) {
 func New() Splitter {
 	return Splitter{
 		WithHeader: true,
-		bufferSize: os.Getpagesize() * 128,
+		bufferSize: int64(os.Getpagesize() * 128),
 	}
 }
 
@@ -150,7 +150,7 @@ func readLinesFromBulk(st *state) error {
 			continue
 		}
 		st.bulkBuffer.Write(bytesLine)
-		if st.s.FileChunkSize < st.s.bufferSize && st.bulkBuffer.Len() >= (st.s.FileChunkSize-len(st.header)) {
+		if st.s.FileChunkSize < st.s.bufferSize && int64(st.bulkBuffer.Len()) >= (st.s.FileChunkSize-int64(len(st.header))) {
 			err = saveBulkToFile(st)
 			if err != nil {
 				return err
