@@ -23,7 +23,7 @@ func init() {
 
 //Automatically generate int64 and int32 number data.
 func generateRandomLongNum(totalNum int64) {
-	f, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm)
+	f, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY, os.ModePerm)
 
 	if err != nil {
 		fmt.Printf("failed to open file : %s ", err.Error())
@@ -62,7 +62,7 @@ func generateRandomLongNum(totalNum int64) {
 }
 
 func main() {
-	var totalNum = flag.Int64("total", 1024*1024, "total loop round")
+	var totalNum = flag.Int64("total", 1024, "total loop round")
 	flag.Parse()
 
 	//step 1

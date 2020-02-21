@@ -1,4 +1,4 @@
-package main
+package buf
 
 import (
 	"bufio"
@@ -47,48 +47,47 @@ func ReadLinesByBufIO(filename string) {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
-	//set buffer block size 1M
-	buf := make([]byte, 0, 1024*1024)
+	//set buffer block size 10M
+	buf := make([]byte, 0, 1024*1024*10)
 
 	// Buffer sets the initial buffer to use when scanning and the maximum
 	// size of buffer that may be allocated during scanning.
-	scanner.Buffer(buf, 130*1024*1024)
+	fmt.Println("local memory : ", getOSMem())
+	scanner.Buffer(buf, getOSMem())
 
 	var i int64
 	//16 M
 	var originalData []int64
 	for scanner.Scan() {
-		//if i > 1024*1024 {
-		//	fmt.Printf("the line number is too large (bigger than 16*1024*1024)")
-		//}
 		i++
 		line := strings.Trim(scanner.Text(), " \n")
 		if line == "" {
 			continue
 		}
-		//fmt.Printf("%d %s", i, line+ "\n")
+		//fmt.Printf("%d %s", i, scanner.Text())
 
 		number, err := strconv.ParseInt(line, 10, 64)
 		if err != nil {
 			fmt.Printf("[%s]\n", line)
 		}
 		originalData = append(originalData, number)
-
 	}
 	fmt.Printf("read file time: %f \n", time.Since(t).Seconds())
 	t = time.Now()
 	//quick sort algorithm
+	ShowMemoryInfo()
 	int64Slice := Int64Slice(originalData)
 	sort.Sort(int64Slice)
 	//selectionSort(originalData)
+	Done()
 
 	fmt.Printf("sort time: %f \n", time.Since(t).Seconds())
-	writeDataToFile(originalData)
+	writeDataToFile(originalData, "sorted"+filename)
 }
 
-func writeDataToFile(int64DataSlice []int64) {
+func writeDataToFile(int64DataSlice []int64, filename string) {
 	t := time.Now()
-	f, err := os.OpenFile(outputFileName, os.O_CREATE|os.O_WRONLY, os.ModePerm)
+	f, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, os.ModePerm)
 
 	if err != nil {
 		fmt.Printf("failed to open file : %s ", err.Error())
@@ -118,13 +117,19 @@ func PrintMemUsage() {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 	// For info on each, see: https://golang.org/pkg/runtime/#MemStats
-	fmt.Printf("Alloc = %v KB", bToKb(m.Alloc))
-	fmt.Printf("\tTotalAlloc = %v KB", bToKb(m.TotalAlloc))
-	fmt.Printf("\tSys = %v KB", bToKb(m.Sys))
+	fmt.Printf("Alloc = %v K", bToMb(m.Alloc))
+	fmt.Printf("\tTotalAlloc = %v K", bToMb(m.TotalAlloc))
+	fmt.Printf("\tSys = %v K", bToMb(m.Sys))
 	fmt.Printf("\tNumGC = %v\n", m.NumGC)
 }
 
-func bToKb(b uint64) float64 {
+func getOSMem() int {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	return int(m.Sys)
+}
+
+func bToMb(b uint64) float64 {
 	return float64(b) / float64(1024)
 }
 
@@ -142,12 +147,10 @@ func doStaticMemory() {
 	}
 }
 
-func showMemoryInfo() {
-	go doStaticMemory()
-}
-func main() {
-	showMemoryInfo()
-	ReadLinesByBufIO(fileName)
-
+func Done() {
 	done <- true
+}
+
+func ShowMemoryInfo() {
+	go doStaticMemory()
 }
