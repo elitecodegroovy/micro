@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -13,6 +14,7 @@ import (
 var (
 	fileName       = "bigLongTypeData.txt"
 	outputFileName = "sortedDataSet.txt"
+	done           = make(chan bool)
 )
 
 // IntSlice attaches the methods of Interface to []int, sorting in increasing order.
@@ -50,15 +52,15 @@ func ReadLinesByBufIO(filename string) {
 
 	// Buffer sets the initial buffer to use when scanning and the maximum
 	// size of buffer that may be allocated during scanning.
-	scanner.Buffer(buf, 16*1024*1024)
+	scanner.Buffer(buf, 130*1024*1024)
 
 	var i int64
 	//16 M
 	var originalData []int64
 	for scanner.Scan() {
-		if i > 1024*1024 {
-			fmt.Printf("the line number is too large (bigger than 16*1024*1024)")
-		}
+		//if i > 1024*1024 {
+		//	fmt.Printf("the line number is too large (bigger than 16*1024*1024)")
+		//}
 		i++
 		line := strings.Trim(scanner.Text(), " \n")
 		if line == "" {
@@ -110,6 +112,42 @@ func writeDataToFile(int64DataSlice []int64) {
 	fmt.Printf("writing sort order time: %f \n", time.Since(t).Seconds())
 }
 
+// PrintMemUsage outputs the current, total and OS memory being used. As well as the number
+// of garage collection cycles completed.
+func PrintMemUsage() {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	// For info on each, see: https://golang.org/pkg/runtime/#MemStats
+	fmt.Printf("Alloc = %v KB", bToKb(m.Alloc))
+	fmt.Printf("\tTotalAlloc = %v KB", bToKb(m.TotalAlloc))
+	fmt.Printf("\tSys = %v KB", bToKb(m.Sys))
+	fmt.Printf("\tNumGC = %v\n", m.NumGC)
+}
+
+func bToKb(b uint64) float64 {
+	return float64(b) / float64(1024)
+}
+
+func doStaticMemory() {
+	ticker := time.NewTicker(time.Millisecond * 10)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-done:
+			fmt.Println("Done!")
+			return
+		case <-ticker.C:
+			PrintMemUsage()
+		}
+	}
+}
+
+func showMemoryInfo() {
+	go doStaticMemory()
+}
 func main() {
+	showMemoryInfo()
 	ReadLinesByBufIO(fileName)
+
+	done <- true
 }

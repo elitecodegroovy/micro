@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"golang.org/x/sync/errgroup"
 	"math/rand"
@@ -21,8 +22,8 @@ func init() {
 }
 
 //Automatically generate int64 and int32 number data.
-func generateRandomLongNum() {
-	f, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY, os.ModePerm)
+func generateRandomLongNum(totalNum int64) {
+	f, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm)
 
 	if err != nil {
 		fmt.Printf("failed to open file : %s ", err.Error())
@@ -32,8 +33,9 @@ func generateRandomLongNum() {
 
 	var g errgroup.Group
 
+	var i int64
 	// 0.900 G data will be generated.
-	for i := 0; i < 1024; i++ {
+	for ; i < totalNum; i++ {
 		for j := 0; j < 1024; j++ {
 			g.Go(func() error {
 				var v string
@@ -60,7 +62,10 @@ func generateRandomLongNum() {
 }
 
 func main() {
+	var totalNum = flag.Int64("total", 1024*1024, "total loop round")
+	flag.Parse()
+
 	//step 1
-	generateRandomLongNum()
+	generateRandomLongNum(*totalNum)
 
 }
