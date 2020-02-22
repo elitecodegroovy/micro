@@ -29,12 +29,12 @@ type Splitter struct {
 	bufferSize    int64 //in bytes
 }
 
-type state struct {
+type ChunkFileInfo struct {
 	s             Splitter
 	inputFilePath string
 	fileName      string
 	ext           string
-	resultDirPath string
+	outputDirPath string
 	inputFile     *os.File
 	chunkFile     *os.File
 	chunkFilePath string
@@ -47,7 +47,7 @@ type state struct {
 	result        []string
 }
 
-func (s *state) setChunkFile(file *os.File) {
+func (s *ChunkFileInfo) setChunkFile(file *os.File) {
 	if s.chunkFile != nil {
 		s.chunkFile.Close()
 	}
@@ -57,7 +57,7 @@ func (s *state) setChunkFile(file *os.File) {
 //New initializes Splitter struct
 func New() Splitter {
 	return Splitter{
-		WithHeader: true,
+		WithHeader: false,
 		bufferSize: int64(os.Getpagesize() * 128),
 	}
 }
@@ -79,18 +79,18 @@ func (s Splitter) Split(inputFilePath string, outputDirPath string) ([]string, e
 		return nil, errors.New(msg)
 	}
 	fileSize := stat.Size()
-	if fileSize <= int64(s.FileChunkSize) {
+	if fileSize <= s.FileChunkSize {
 		return nil, ErrBigFileChunkSize
 	}
 
 	bufBulk := make([]byte, s.bufferSize)
 	fileName, ext := getFileName(inputFilePath)
-	st := state{
+	st := ChunkFileInfo{
 		s:             s,
 		inputFilePath: inputFilePath,
 		fileName:      fileName,
 		ext:           ext,
-		resultDirPath: prepareResultDirPath(outputDirPath),
+		outputDirPath: prepareResultDirPath(outputDirPath),
 		inputFile:     file,
 		firstLine:     true,
 		chunk:         1,
@@ -133,7 +133,7 @@ func (s Splitter) Split(inputFilePath string, outputDirPath string) ([]string, e
 }
 
 //It reads bulk line by line
-func readLinesFromBulk(st *state) error {
+func readLinesFromBulk(st *ChunkFileInfo) error {
 	for {
 		bytesLine, err := st.fileBuffer.ReadBytes('\n')
 		if err == io.EOF {
@@ -162,8 +162,8 @@ func readLinesFromBulk(st *state) error {
 }
 
 // It saves lines from bulk to a new file
-func saveBulkToFile(st *state) error {
-	st.chunkFilePath = st.resultDirPath + st.fileName + "_" + strconv.Itoa(st.chunk) + "." + st.ext
+func saveBulkToFile(st *ChunkFileInfo) error {
+	st.chunkFilePath = st.outputDirPath + st.fileName + "_" + strconv.Itoa(st.chunk) + "." + st.ext
 	stat, err := os.Stat(st.chunkFilePath)
 	if os.IsNotExist(err) {
 		chunkFile, err := os.Create(st.chunkFilePath)
@@ -172,11 +172,15 @@ func saveBulkToFile(st *state) error {
 			return errors.New(msg)
 		}
 		st.setChunkFile(chunkFile)
-		_, err = st.chunkFile.Write(st.header)
-		if err != nil {
-			msg := fmt.Sprintf("Couldn't write header of chunk file %s : %v", st.chunkFilePath, err)
-			return errors.New(msg)
+		//set the file header if it provide the parameter.
+		if st.s.WithHeader {
+			_, err = st.chunkFile.Write(st.header)
+			if err != nil {
+				msg := fmt.Sprintf("Couldn't write header of chunk file %s : %v", st.chunkFilePath, err)
+				return errors.New(msg)
+			}
 		}
+
 		st.result = append(st.result, st.chunkFilePath)
 	}
 

@@ -2,6 +2,7 @@ package buf
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 	"runtime"
@@ -15,6 +16,8 @@ var (
 	fileName       = "bigLongTypeData.txt"
 	outputFileName = "sortedDataSet.txt"
 	done           = make(chan bool)
+
+	bufferSize = int64(os.Getpagesize() * 128)
 )
 
 // IntSlice attaches the methods of Interface to []int, sorting in increasing order.
@@ -86,6 +89,7 @@ func ReadLinesByBufIO(filename string) {
 
 func writeDataToFile(int64DataSlice []int64, filename string) {
 	t := time.Now()
+	bulkBuffer := bytes.NewBuffer(make([]byte, 0, bufferSize))
 	f, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, os.ModePerm)
 
 	if err != nil {
@@ -93,20 +97,30 @@ func writeDataToFile(int64DataSlice []int64, filename string) {
 		os.Exit(1)
 	}
 
-	defer f.Close()
-	//100K buffer writer size,
-	//3.223659s
-	w := bufio.NewWriterSize(f, 1024*100)
-	//3.372287 s
-	//w := bufio.NewWriter(f)
-	for _, data := range int64DataSlice {
-		//print(">")
-		if _, err1 := f.Write([]byte(strconv.FormatInt(data, 10) + "\n")); err1 != nil {
+	x := 0
+	for len(int64DataSlice) > 0 {
+		x++
+		if _, err1 := bulkBuffer.Write([]byte(strconv.FormatInt(int64DataSlice[0], 10) + "\n")); err1 != nil {
 			fmt.Printf("failed to write number data : %s ", err1.Error())
 			os.Exit(1)
 		}
+		int64DataSlice = append(int64DataSlice[:0], int64DataSlice[1:]...)
 	}
-	w.Flush()
+
+	//defer f.Close()
+	////100K buffer writer size,
+	////3.223659s
+	//w := bufio.NewWriterSize(f, 1024*100)
+	////3.372287 s
+	////w := bufio.NewWriter(f)
+	//for _, data := range int64DataSlice {
+	//	//print(">")
+	//	if _, err1 := f.Write([]byte(strconv.FormatInt(data, 10) + "\n")); err1 != nil {
+	//		fmt.Printf("failed to write number data : %s ", err1.Error())
+	//		os.Exit(1)
+	//	}
+	//}
+	//w.Flush()
 	fmt.Printf("writing sort order time: %f \n", time.Since(t).Seconds())
 }
 
