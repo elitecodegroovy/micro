@@ -26,3 +26,7 @@ func TestSort(t *testing.T) {
 		fmt.Printf("i=%d, v=%d \n", i, v)
 	}
 }
+
+func TestVar(t *testing.T) {
+	fmt.Println(">>>", bufferSize)
+}

@@ -54,7 +54,7 @@ func setUp(t *testing.T) {
 func TestSplitFile(t *testing.T) {
 	setUp(t)
 	input := "data/bigLongTypeData.txt"
-	t.Run("Default flow", func(t *testing.T) {
+	t.Run("Default", func(t *testing.T) {
 		t1 := time.Now()
 		s := New()
 		s.FileChunkSize = 5242880
@@ -103,4 +103,10 @@ func assertResult(t *testing.T, result []string, expected []string) {
 
 func TestSingleQuota(t *testing.T) {
 	fmt.Println(">>>>[", string(filepath.Separator), "]", 5*1024*1024, 345563+310938+310690+81388)
+	ss := []int{1, 2, 3, 4, 5, 6, 78, 0, 11, 232}
+
+	ss = append(ss[:0], ss[3:]...)
+	//[4 5 6 78 0 11 232]
+	fmt.Println("\t", ss)
+
 }

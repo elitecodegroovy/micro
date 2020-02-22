@@ -81,9 +81,12 @@ func ReadLinesByBufIO(filename string) {
 	//selectionSort(originalData)
 
 	fmt.Printf("sort time: %f \n", time.Since(t).Seconds())
+	//ShowMemoryInfo()
 	writeDataToFile(originalData, "sorted"+filename)
+	//Done()
 }
 
+//writing sort order time: 302.858123
 func writeDataToFile(int64DataSlice []int64, filename string) {
 	t := time.Now()
 	f, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, os.ModePerm)
@@ -116,10 +119,10 @@ func PrintMemUsage() {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 	// For info on each, see: https://golang.org/pkg/runtime/#MemStats
-	fmt.Printf("Alloc = %v K", bToMb(m.Alloc))
-	fmt.Printf("\tTotalAlloc = %v K", bToMb(m.TotalAlloc))
-	fmt.Printf("\tSys = %v K", bToMb(m.Sys))
-	fmt.Printf("\tNumGC = %v\n", m.NumGC)
+	fmt.Printf("Alloc = %fM", bToMb(m.Alloc))
+	fmt.Printf("\tTotalAlloc = %f M", bToMb(m.TotalAlloc))
+	fmt.Printf("\tSys = %fM", bToMb(m.Sys))
+	fmt.Printf("\tNumGC = %d\n", m.NumGC)
 }
 
 func getOSMem() int {
@@ -129,7 +132,7 @@ func getOSMem() int {
 }
 
 func bToMb(b uint64) float64 {
-	return float64(b) / float64(1024)
+	return float64(b) / float64(1024) / float64(1024)
 }
 
 func doStaticMemory() {

@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"github.com/micro/micro/cmd/file/buf"
+	"github.com/micro/micro/cmd/file/bufv2"
 	"io/ioutil"
 	"log"
 	"regexp"
@@ -40,7 +40,9 @@ func main() {
 
 	for i := 0; i < len(filenames); i++ {
 		log.Printf("filename: %s", filenames[i])
+		buf.ShowMemoryInfo()
 		buf.ReadLinesByBufIO(filenames[i])
+		buf.Done()
 	}
 
 }

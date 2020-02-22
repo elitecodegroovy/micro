@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"golang.org/x/sync/errgroup"
 	"os"
 	"runtime"
 	"sort"
@@ -56,7 +57,8 @@ func ReadLinesByBufIO(filename string) {
 	// Buffer sets the initial buffer to use when scanning and the maximum
 	// size of buffer that may be allocated during scanning.
 	fmt.Println("local memory : ", getOSMem())
-	scanner.Buffer(buf, getOSMem())
+	//1G cap
+	scanner.Buffer(buf, 1024*1024*1024)
 
 	var i int64
 	//16 M
@@ -76,19 +78,56 @@ func ReadLinesByBufIO(filename string) {
 		originalData = append(originalData, number)
 	}
 	fmt.Printf("read file time: %f \n", time.Since(t).Seconds())
-	t = time.Now()
 
+	//sortOriginalData(originalData, filename)
+
+}
+
+func sortOriginalData(originalData []int64, filename string) {
+	t := time.Now()
 	//quick sort algorithm
 	int64Slice := Int64Slice(originalData)
 	sort.Sort(int64Slice)
 	//selectionSort(originalData)
 
 	fmt.Printf("sort time: %f \n", time.Since(t).Seconds())
+	//ShowMemoryInfo()
 	writeDataToFile(originalData, "sorted"+filename)
+	//Done()
 }
 
+//writing sort order time: 302.858123 for 1.2G
+//writing sort order time: 3.431778  for 15M
 func writeDataToFile(int64DataSlice []int64, filename string) {
 	t := time.Now()
+	f, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, os.ModePerm)
+
+	if err != nil {
+		fmt.Printf("failed to open file : %s ", err.Error())
+		os.Exit(1)
+	}
+
+	defer f.Close()
+	//100K buffer writer size,
+	//3.223659s
+	w := bufio.NewWriterSize(f, 1024*100)
+	//3.372287 s
+	//w := bufio.NewWriter(f)
+	for _, data := range int64DataSlice {
+		//print(">")
+		if _, err1 := f.Write([]byte(strconv.FormatInt(data, 10) + "\n")); err1 != nil {
+			fmt.Printf("failed to write number data : %s ", err1.Error())
+			os.Exit(1)
+		}
+	}
+	w.Flush()
+	fmt.Printf("writing sort order time: %f \n", time.Since(t).Seconds())
+}
+
+// 314.925621
+func writeDataToFileV0(int64DataSlice []int64, filename string) {
+	t := time.Now()
+	var g errgroup.Group
 	bulkBuffer := bytes.NewBuffer(make([]byte, 0, bufferSize))
 	f, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, os.ModePerm)
 
@@ -97,30 +136,44 @@ func writeDataToFile(int64DataSlice []int64, filename string) {
 		os.Exit(1)
 	}
 
-	x := 0
-	for len(int64DataSlice) > 0 {
-		x++
-		if _, err1 := bulkBuffer.Write([]byte(strconv.FormatInt(int64DataSlice[0], 10) + "\n")); err1 != nil {
-			fmt.Printf("failed to write number data : %s ", err1.Error())
-			os.Exit(1)
-		}
-		int64DataSlice = append(int64DataSlice[:0], int64DataSlice[1:]...)
-	}
+	orderDataChan := make(chan int64, bufferSize)
+	defer close(orderDataChan)
 
-	//defer f.Close()
-	////100K buffer writer size,
-	////3.223659s
-	//w := bufio.NewWriterSize(f, 1024*100)
-	////3.372287 s
-	////w := bufio.NewWriter(f)
-	//for _, data := range int64DataSlice {
-	//	//print(">")
-	//	if _, err1 := f.Write([]byte(strconv.FormatInt(data, 10) + "\n")); err1 != nil {
-	//		fmt.Printf("failed to write number data : %s ", err1.Error())
-	//		os.Exit(1)
-	//	}
-	//}
-	//w.Flush()
+	sliceSize := len(int64DataSlice)
+	g.Go(func() error {
+		for len(int64DataSlice) > 0 {
+			orderDataChan <- int64DataSlice[0]
+			int64DataSlice = append(int64DataSlice[:0], int64DataSlice[1:]...)
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		for {
+			if sliceSize == 0 {
+				return nil
+			}
+			v, ok := <-orderDataChan
+			if ok {
+				sliceSize -= 1
+				if _, err := bulkBuffer.Write([]byte(strconv.FormatInt(v, 10) + "\n")); err != nil {
+					fmt.Printf("failed to write number data : %s ", err.Error())
+					os.Exit(1)
+				}
+				if int64(bulkBuffer.Len()) >= (bufferSize - 1024) {
+					if _, err = f.Write(bulkBuffer.Bytes()); err != nil {
+						fmt.Printf("failed to write []byte for a file. Err : %s ", err.Error())
+						os.Exit(1)
+					}
+					bulkBuffer.Reset()
+				}
+			}
+		}
+	})
+	if err := g.Wait(); err != nil {
+		fmt.Println("error ing.Wait() , error " + err.Error())
+	}
+	//writing sort order time: 389.195321
 	fmt.Printf("writing sort order time: %f \n", time.Since(t).Seconds())
 }
 
@@ -130,10 +183,10 @@ func PrintMemUsage() {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 	// For info on each, see: https://golang.org/pkg/runtime/#MemStats
-	fmt.Printf("Alloc = %v K", bToMb(m.Alloc))
-	fmt.Printf("\tTotalAlloc = %v K", bToMb(m.TotalAlloc))
-	fmt.Printf("\tSys = %v K", bToMb(m.Sys))
-	fmt.Printf("\tNumGC = %v\n", m.NumGC)
+	fmt.Printf("Alloc = %f M", bToMb(m.Alloc))
+	fmt.Printf("\tTotalAlloc = %fM", bToMb(m.TotalAlloc))
+	fmt.Printf("\tSys = %f M", bToMb(m.Sys))
+	fmt.Printf("\tNumGC = %d \n", m.NumGC)
 }
 
 func getOSMem() int {
@@ -143,7 +196,7 @@ func getOSMem() int {
 }
 
 func bToMb(b uint64) float64 {
-	return float64(b) / float64(1024)
+	return float64(b) / float64(1024) / float64(1024)
 }
 
 func doStaticMemory() {

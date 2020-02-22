@@ -191,7 +191,7 @@ func saveBulkToFile(st *ChunkFileInfo) error {
 		return errors.New(msg)
 	}
 	stat, _ = os.Stat(st.chunkFilePath)
-	if stat.Size() > int64(st.s.FileChunkSize-st.s.bufferSize) {
+	if stat.Size() > (st.s.FileChunkSize - st.s.bufferSize) {
 		st.chunk++
 	}
 	st.bulkBuffer.Reset()
