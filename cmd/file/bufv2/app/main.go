@@ -32,7 +32,6 @@ func main() {
 				filenames = append(filenames, f.Name())
 				log.Printf("filename: %s", f.Name())
 			}
-
 		}
 	} else {
 		filenames = strings.Split(*files, ",")
@@ -40,9 +39,9 @@ func main() {
 
 	for i := 0; i < len(filenames); i++ {
 		log.Printf("filename: %s", filenames[i])
-		buf.ShowMemoryInfo()
-		buf.ReadLinesByBufIO(filenames[i])
-		buf.Done()
+		//buf.ShowMemoryInfo()
+		buf.ReadLinesByBufIO(filenames[i], 10*1024*1024, 100*1024*1024)
+		//buf.Done()
 	}
 
 }

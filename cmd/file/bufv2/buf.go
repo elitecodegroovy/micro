@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"golang.org/x/sync/errgroup"
 	"os"
-	"runtime"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -14,11 +14,8 @@ import (
 )
 
 var (
-	fileName       = "bigLongTypeData.txt"
-	outputFileName = "sortedDataSet.txt"
-	done           = make(chan bool)
-
-	bufferSize = int64(os.Getpagesize() * 128)
+	bufferSize       = int64(os.Getpagesize() * 128)
+	writerBufferSize = 102400
 )
 
 // IntSlice attaches the methods of Interface to []int, sorting in increasing order.
@@ -42,7 +39,9 @@ func selectionSort(items []int64) {
 	}
 }
 
-func ReadLinesByBufIO(filename string) {
+func ReadLinesByBufIO(filename string, bufferSize, bufferSizeCapacity int) (string, error) {
+	writerBufferSize = bufferSize
+
 	t := time.Now()
 	file, err := os.Open(filename)
 	if err != nil {
@@ -52,13 +51,12 @@ func ReadLinesByBufIO(filename string) {
 
 	scanner := bufio.NewScanner(file)
 	//set buffer block size 10M
-	buf := make([]byte, 0, 1024*1024*10)
+	buf := make([]byte, 0, bufferSize)
 
 	// Buffer sets the initial buffer to use when scanning and the maximum
 	// size of buffer that may be allocated during scanning.
-	fmt.Println("local memory : ", getOSMem())
 	//1G cap
-	scanner.Buffer(buf, 1024*1024*1024)
+	scanner.Buffer(buf, bufferSizeCapacity)
 
 	var i int64
 	//16 M
@@ -79,11 +77,10 @@ func ReadLinesByBufIO(filename string) {
 	}
 	fmt.Printf("read file time: %f \n", time.Since(t).Seconds())
 
-	//sortOriginalData(originalData, filename)
-
+	return sortOriginalData(originalData, filename)
 }
 
-func sortOriginalData(originalData []int64, filename string) {
+func sortOriginalData(originalData []int64, filename string) (string, error) {
 	t := time.Now()
 	//quick sort algorithm
 	int64Slice := Int64Slice(originalData)
@@ -92,36 +89,61 @@ func sortOriginalData(originalData []int64, filename string) {
 
 	fmt.Printf("sort time: %f \n", time.Since(t).Seconds())
 	//ShowMemoryInfo()
-	writeDataToFile(originalData, "sorted"+filename)
+	return writeDataToFile(originalData, filename)
 	//Done()
 }
 
 //writing sort order time: 302.858123 for 1.2G
 //writing sort order time: 3.431778  for 15M
-func writeDataToFile(int64DataSlice []int64, filename string) {
+func writeDataToFile(int64DataSlice []int64, filename string) (string, error) {
 	t := time.Now()
-	f, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, os.ModePerm)
+	baseBase, inputFilename, ext := getFileNameInfo(filename)
+	sortedFilenamePath := baseBase + string(filepath.Separator) + inputFilename + "Sorted." + ext
+	f, err := os.OpenFile(sortedFilenamePath, os.O_CREATE|os.O_WRONLY, os.ModePerm)
 
 	if err != nil {
 		fmt.Printf("failed to open file : %s ", err.Error())
-		os.Exit(1)
+		return "", err
 	}
 
-	defer f.Close()
 	//100K buffer writer size,
 	//3.223659s
-	w := bufio.NewWriterSize(f, 1024*100)
+	w := bufio.NewWriterSize(f, writerBufferSize)
 	//3.372287 s
 	//w := bufio.NewWriter(f)
 	for _, data := range int64DataSlice {
 		//print(">")
-		if _, err1 := f.Write([]byte(strconv.FormatInt(data, 10) + "\n")); err1 != nil {
-			fmt.Printf("failed to write number data : %s ", err1.Error())
-			os.Exit(1)
+		if _, err1 := w.Write([]byte(strconv.FormatInt(data, 10) + "\n")); err1 != nil {
+			fmt.Printf("failed to write number data : %s \n", err1.Error())
+			return "", err
 		}
 	}
-	w.Flush()
+	if err = w.Flush(); err != nil {
+		fmt.Printf("w.Flush() error  : %s \n ", err.Error())
+		return "", err
+	}
+	if err = f.Close(); err != nil {
+		fmt.Printf("w.Flush() error  : %s \n ", err.Error())
+		return "", err
+	}
 	fmt.Printf("writing sort order time: %f \n", time.Since(t).Seconds())
+	return sortedFilenamePath, nil
+}
+
+//It extracts name and extension from path
+func getFileNameInfo(path string) (string, string, string) {
+	split := strings.Split(path, string(filepath.Separator))
+	//file directory path
+	fileBase := strings.Join(split[:len(split)-2], string(filepath.Separator))
+	//file name
+	name := split[len(split)-1]
+
+	split = strings.Split(name, ".")
+	ext := split[len(split)-1]
+	nameSlice := split[:len(split)-1]
+	name = strings.Join(nameSlice, "")
+
+	return fileBase, name, ext
 }
 
 // 314.925621
@@ -175,48 +197,4 @@ func writeDataToFileV0(int64DataSlice []int64, filename string) {
 	}
 	//writing sort order time: 389.195321
 	fmt.Printf("writing sort order time: %f \n", time.Since(t).Seconds())
-}
-
-// PrintMemUsage outputs the current, total and OS memory being used. As well as the number
-// of garage collection cycles completed.
-func PrintMemUsage() {
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-	// For info on each, see: https://golang.org/pkg/runtime/#MemStats
-	fmt.Printf("Alloc = %f M", bToMb(m.Alloc))
-	fmt.Printf("\tTotalAlloc = %fM", bToMb(m.TotalAlloc))
-	fmt.Printf("\tSys = %f M", bToMb(m.Sys))
-	fmt.Printf("\tNumGC = %d \n", m.NumGC)
-}
-
-func getOSMem() int {
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-	return int(m.Sys)
-}
-
-func bToMb(b uint64) float64 {
-	return float64(b) / float64(1024) / float64(1024)
-}
-
-func doStaticMemory() {
-	ticker := time.NewTicker(time.Millisecond * 10)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-done:
-			fmt.Println("Done!")
-			return
-		case <-ticker.C:
-			PrintMemUsage()
-		}
-	}
-}
-
-func Done() {
-	done <- true
-}
-
-func ShowMemoryInfo() {
-	go doStaticMemory()
 }

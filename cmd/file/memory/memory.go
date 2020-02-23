@@ -2,6 +2,7 @@ package memory
 
 import (
 	"fmt"
+	"github.com/micro/micro/mem"
 	"runtime"
 	"time"
 )
@@ -16,11 +17,12 @@ func PrintMemUsage() {
 	// For info on each, see: https://golang.org/pkg/runtime/#MemStats
 	fmt.Printf("Alloc = %v M", bToMb(m.Alloc))
 	fmt.Printf("\tTotalAlloc = %v M", bToMb(m.TotalAlloc))
+	fmt.Printf("\tHeapSys = %v M", bToMb(m.HeapSys))
 	fmt.Printf("\tSys = %v M", bToMb(m.Sys))
 	fmt.Printf("\tNumGC = %v\n", m.NumGC)
 }
 
-func getOSMem() int {
+func GetOSMem() int {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 	return int(m.Sys)
@@ -42,6 +44,11 @@ func DoStaticMemory() {
 			PrintMemUsage()
 		}
 	}
+}
+
+func GetFreeCache() uint64 {
+	v, _ := mem.VirtualMemory()
+	return v.Free
 }
 
 func Done() {

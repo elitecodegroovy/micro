@@ -2,6 +2,8 @@ package bufio
 
 import (
 	"bufio"
+	"fmt"
+	"os"
 	"strings"
 	"testing"
 )
@@ -37,4 +39,30 @@ func TestScanByte(t *testing.T) {
 			t.Errorf("#%d: %v", n, err)
 		}
 	}
+}
+
+func TestBufIO(t *testing.T) {
+	filename := "temp.txt"
+	file, err := os.Create(filename)
+	defer file.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	writer := bufio.NewWriterSize(file, 20)
+	linesToWrite := []string{"Rust--A language empowering everyone to build reliable and efficient software. ",
+		"Rust’s rich type system and ownership ",
+		"Rust has great documentation, a friendly compiler with useful error messages, and top-notch tooling — an integrated",
+		"Rust is blazingly fast and memory-efficient"}
+	for _, line := range linesToWrite {
+		bytesWritten, err := writer.WriteString(line + "\n")
+		if err != nil {
+			t.Fatalf("Got error while writing to a file. Err: %s", err.Error())
+		}
+		fmt.Printf("Bytes Written: %d\n", bytesWritten)
+		fmt.Printf("Available: %d\n", writer.Available())
+		fmt.Printf("Buffered : %d\n", writer.Buffered())
+	}
+	writer.Flush()
+	os.Remove(filename)
+
 }
