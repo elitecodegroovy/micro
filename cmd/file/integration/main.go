@@ -50,6 +50,20 @@ func validateInputParameters() bool {
 	return true
 }
 
+func splitFile() ([]string, int64, error) {
+	splitter := splitter.New()
+
+	splitter.FileChunkSize = chunkFileSize
+	fmt.Println("max chunk file size :", splitter.FileChunkSize, "K")
+
+	result, err := splitter.Split(*filename, *outputDir)
+	if err != nil {
+		fmt.Println("do split big file with an error :", err.Error())
+		return nil, 0, err
+	}
+	return result, splitter.BigFileTotalLineNumber, nil
+}
+
 func main() {
 	flag.Parse()
 
@@ -59,14 +73,9 @@ func main() {
 	}
 
 	//Step 1: split big file into small file
-	splitter := splitter.New()
-
-	splitter.FileChunkSize = chunkFileSize
-	fmt.Println("max chunk file size :", splitter.FileChunkSize, "K")
-
-	result, err := splitter.Split(*filename, *outputDir)
+	result, fileLines, err := splitFile()
 	if err != nil {
-		fmt.Println("split big file with an error :", err.Error())
+		fmt.Println("splitFile splits big file with an error :", err.Error())
 		return
 	}
 	fmt.Println("output file info :", result)
@@ -78,9 +87,9 @@ func main() {
 	//sort the data in each small file
 	for i, resultFilepath := range result {
 		fmt.Printf("%d > sort file %s \n", i, resultFilepath)
-		sortedFilenamePath, err := buf.ReadLinesByBufIO(resultFilepath, int(chunkFileSize/3), int(chunkFileSize))
+		sortedFilenamePath, err := buf.SortDataInFile(resultFilepath, int(chunkFileSize/3), int(chunkFileSize))
 		if err != nil {
-			fmt.Println("buf.ReadLinesByBufIO :", err.Error())
+			fmt.Println("buf.SortDataInFile :", err.Error())
 			return
 		}
 		if len(sortedFilenamePath) != 0 {
@@ -90,6 +99,6 @@ func main() {
 			return
 		}
 	}
-	fmt.Printf(">>>%v \n", sortedFilenamePaths)
+	fmt.Printf(">>>total lines: %d \n", fileLines)
 
 }

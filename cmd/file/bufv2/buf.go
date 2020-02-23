@@ -39,7 +39,7 @@ func selectionSort(items []int64) {
 	}
 }
 
-func ReadLinesByBufIO(filename string, bufferSize, bufferSizeCapacity int) (string, error) {
+func SortDataInFile(filename string, bufferSize, bufferSizeCapacity int) (string, error) {
 	writerBufferSize = bufferSize
 
 	t := time.Now()
@@ -97,7 +97,7 @@ func sortOriginalData(originalData []int64, filename string) (string, error) {
 //writing sort order time: 3.431778  for 15M
 func writeDataToFile(int64DataSlice []int64, filename string) (string, error) {
 	t := time.Now()
-	baseBase, inputFilename, ext := getFileNameInfo(filename)
+	baseBase, inputFilename, ext := GetFileNameInfo(filename)
 	sortedFilenamePath := baseBase + string(filepath.Separator) + inputFilename + "Sorted." + ext
 	f, err := os.OpenFile(sortedFilenamePath, os.O_CREATE|os.O_WRONLY, os.ModePerm)
 
@@ -131,7 +131,7 @@ func writeDataToFile(int64DataSlice []int64, filename string) (string, error) {
 }
 
 //It extracts name and extension from path
-func getFileNameInfo(path string) (string, string, string) {
+func GetFileNameInfo(path string) (string, string, string) {
 	split := strings.Split(path, string(filepath.Separator))
 	//file directory path
 	fileBase := strings.Join(split[:len(split)-2], string(filepath.Separator))

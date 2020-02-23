@@ -108,5 +108,9 @@ func TestSingleQuota(t *testing.T) {
 	ss = append(ss[:0], ss[3:]...)
 	//[4 5 6 78 0 11 232]
 	fmt.Println("\t", ss)
+	ss[3] = 2020
+	fmt.Println("\t", ss)
 
+	var sint64 []int64
+	fmt.Println(sint64)
 }

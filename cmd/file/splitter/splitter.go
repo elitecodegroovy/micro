@@ -24,13 +24,14 @@ var (
 //FileChunkSize - a size of chunk in bytes, should be set by client
 //WithHeader - whether split csv with header (true by default)
 type Splitter struct {
-	FileChunkSize int64 //in bytes
-	WithHeader    bool
-	bufferSize    int64 //in bytes
+	FileChunkSize          int64 //in bytes
+	WithHeader             bool
+	bufferSize             int64 //in bytes
+	BigFileTotalLineNumber int64
 }
 
 type ChunkFileInfo struct {
-	s             Splitter
+	s             *Splitter
 	inputFilePath string
 	fileName      string
 	ext           string
@@ -55,15 +56,15 @@ func (s *ChunkFileInfo) setChunkFile(file *os.File) {
 }
 
 //New initializes Splitter struct
-func New() Splitter {
-	return Splitter{
+func New() *Splitter {
+	return &Splitter{
 		WithHeader: false,
 		bufferSize: int64(os.Getpagesize() * 128),
 	}
 }
 
 //Split splits file in smaller chunks
-func (s Splitter) Split(inputFilePath string, outputDirPath string) ([]string, error) {
+func (s *Splitter) Split(inputFilePath string, outputDirPath string) ([]string, error) {
 	if s.FileChunkSize < minFileChunkSize {
 		return nil, ErrSmallFileChunkSize
 	}
@@ -128,7 +129,6 @@ func (s Splitter) Split(inputFilePath string, outputDirPath string) ([]string, e
 		}
 	}
 	st.chunkFile.Close()
-
 	return st.result, nil
 }
 
@@ -149,6 +149,7 @@ func readLinesFromBulk(st *ChunkFileInfo) error {
 			st.header = bytesLine
 			continue
 		}
+		st.s.BigFileTotalLineNumber++
 		st.bulkBuffer.Write(bytesLine)
 		if st.s.FileChunkSize < st.s.bufferSize && int64(st.bulkBuffer.Len()) >= (st.s.FileChunkSize-int64(len(st.header))) {
 			err = saveBulkToFile(st)
