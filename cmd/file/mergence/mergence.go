@@ -7,6 +7,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"io"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -27,14 +28,27 @@ type fileChunk struct {
 	chunkChan   chan int64
 	fileBuffer  *bytes.Buffer
 	isProcessed bool
+	lines       int64
+	brokenLine  []byte
 }
+
+type lineItem struct {
+	index int
+	value int64
+}
+
+type lineItemSlice []lineItem
+
+func (p lineItemSlice) Len() int           { return len(p) }
+func (p lineItemSlice) Less(i, j int) bool { return p[i].value < p[j].value }
+func (p lineItemSlice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 func New(outputFilePath string, lines int64, names []string) *mergence {
 	return &mergence{
 		targetFilePath: outputFilePath,
 		filenames:      names,
 		totalFileLines: lines,
-		sortedDataChan: make(chan int64, lines*3/int64(len(names))/int64(100)),
+		sortedDataChan: make(chan int64, int(lines*2)/len(names)/100),
 	}
 }
 
@@ -42,7 +56,7 @@ func (m *mergence) getChunkChanSize() int64 {
 	return m.totalFileLines / int64(len(m.filenames)) / int64(100)
 }
 
-func (f *fileChunk) getFileBufferSize() int64 {
+func getFileBufferSize() int64 {
 	return int64(os.Getpagesize() * 128)
 }
 
@@ -50,20 +64,24 @@ func (f *fileChunk) readLinesFromFileBuffer() error {
 	for {
 		bytesLine, err := f.fileBuffer.ReadBytes('\n')
 		if err == io.EOF {
+			f.brokenLine = bytesLine
 			f.fileBuffer.Reset()
 			break
 		}
-		if err != nil {
+		if err != nil && err != io.EOF {
 			fmt.Printf("Couldn't read bytes from file buffer of file %s : %v", f.filename, err)
 			return err
 		}
 
-		e, err := strconv.ParseInt(strings.Trim(string(bytesLine), " \n"), 10, 64)
+		v := strings.Trim(string(bytesLine), " \n")
+		e, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
 			fmt.Printf("Couldn't  parse bytesLine for the file %s : %v", f.filename, err)
 			return err
 		}
 		f.chunkChan <- e
+		f.lines++
+		//fmt.Printf("i: %d, e:%d\n", f.lines, e)
 	}
 	return nil
 }
@@ -76,19 +94,27 @@ func (f *fileChunk) SendDataToFileChunkChan() error {
 	}
 	defer file.Close()
 
-	bufBulk := make([]byte, f.getFileBufferSize())
+	bufBulk := make([]byte, getFileBufferSize())
 	for {
 		//Read bulk from file
 		size, err := file.Read(bufBulk)
+		fmt.Printf(">>>>>>>>>size:%d \n", size)
 		if err == io.EOF {
 			close(f.chunkChan)
+			fmt.Println("***close chan >" + f.filename + ", lines :" + strconv.FormatInt(f.lines, 10))
 			break
 		}
-		if err != nil {
+		if err != nil && err != io.EOF {
 			fmt.Printf("Couldn't read file chunk %s %v \n", f.filename, err)
 			return err
 		}
-		f.fileBuffer = bytes.NewBuffer(bufBulk[:size])
+		if len(f.brokenLine) > 0 {
+			f.fileBuffer = bytes.NewBuffer(append(f.brokenLine, bufBulk[:size]...))
+			f.brokenLine = []byte{}
+		} else {
+			f.fileBuffer = bytes.NewBuffer(append(f.brokenLine, bufBulk[:size]...))
+		}
+
 		if err = f.readLinesFromFileBuffer(); err != nil {
 			fmt.Printf("Couldn't read lines from file buffer bulk for the file %s %v \n", f.filename, err)
 			return err
@@ -97,8 +123,9 @@ func (f *fileChunk) SendDataToFileChunkChan() error {
 	return nil
 }
 
+//Merge merges all files into a sorted data file.
 func (m *mergence) Merge() error {
-	var fileChunkSlice []*fileChunk
+	m.fileChunkSlice = []*fileChunk{}
 	var g errgroup.Group
 	for i, filename := range m.filenames {
 		fileChunkProcessing := &fileChunk{
@@ -107,20 +134,31 @@ func (m *mergence) Merge() error {
 			chunkChan:   make(chan int64, m.getChunkChanSize()),
 			isProcessed: false,
 		}
-		fileChunkSlice = append(fileChunkSlice, fileChunkProcessing)
+		m.fileChunkSlice = append(m.fileChunkSlice, fileChunkProcessing)
 
+		//Step 1:
 		//read file lines and send line data to the chan 'chunkChan'
 		g.Go(func() error {
 			return fileChunkProcessing.SendDataToFileChunkChan()
 		})
-	}
-	m.fileChunkSlice = fileChunkSlice
 
+		//g.Go(func()error {
+		//	e, ok := <- fileChunkProcessing.chunkChan
+		//	for ok {
+		//		fmt.Printf(">>> i :%d, e: %d", fileChunkProcessing.lines, e)
+		//		e, ok = <- fileChunkProcessing.chunkChan
+		//	}
+		//	return nil
+		//})
+	}
+
+	//Step  2:
 	//get the sorted element and send to the chan 'sortedDataChan'
 	g.Go(func() error {
-		return m.compareLineValue()
+		return m.compareLineValueForEachFile()
 	})
 
+	//Step  3:
 	//write data to the target file.
 	g.Go(func() error {
 		return m.writeFile()
@@ -132,46 +170,73 @@ func (m *mergence) Merge() error {
 	return nil
 }
 
-func (m *mergence) compareLineValue() error {
-	var comparingDataSlice []int64
-	needAddedElements := 0
-	var validDataChanMap = make(map[int]int)
-	//The map can record the valid chan that can be receive data.
-	for i, _ := range m.fileChunkSlice {
-		validDataChanMap[i] = i
+func minInSlice(a []int64) int {
+	if a == nil {
+		return -1
 	}
+	if len(a) == 1 {
+		return 0
+	}
+	i := 1
+	min := 0
+	for i < len(a) {
+		if a[min] > a[i] {
+			min = i
+		}
+		i++
+	}
+	return min
+}
 
+func sortItems(items []lineItem) {
+	if len(items) == 1 {
+		return
+	}
+	s := lineItemSlice(items)
+	sort.Sort(s)
+}
+
+func (m *mergence) compareLineValueForEachFile() error {
+	var fileFirstLineValueSlice []lineItem
+	//The map can record the valid chan that can be receive data.
 	for i, chunkFileProcessingIndex := range m.fileChunkSlice {
-		if !chunkFileProcessingIndex.isProcessed {
-			e, ok := <-chunkFileProcessingIndex.chunkChan
-			if !ok {
-				chunkFileProcessingIndex.isProcessed = true
+		e, ok := <-chunkFileProcessingIndex.chunkChan
+		if ok {
+			item := lineItem{
+				index: i,
+				value: e,
 			}
-			comparingDataSlice = append(comparingDataSlice, e)
+			fileFirstLineValueSlice = append(fileFirstLineValueSlice, item)
+		}
+	}
+loopCall:
+	if len(fileFirstLineValueSlice) > 1 {
+		sortItems(fileFirstLineValueSlice)
+
+		//send item value 'e'
+		m.sortedDataChan <- fileFirstLineValueSlice[0].value
+		e, ok := <-m.fileChunkSlice[fileFirstLineValueSlice[0].index].chunkChan
+		if !ok {
+			m.fileChunkSlice[fileFirstLineValueSlice[0].index].isProcessed = true
+			//remove the first line
+			fileFirstLineValueSlice = append(fileFirstLineValueSlice[:0], fileFirstLineValueSlice[1:]...)
 		} else {
-			delete(validDataChanMap, i)
-			needAddedElements++
+			fileFirstLineValueSlice[0].value = e
 		}
+		goto loopCall
+	} else if len(fileFirstLineValueSlice) == 1 {
+		m.sortedDataChan <- fileFirstLineValueSlice[0].value
+		e, ok := <-m.fileChunkSlice[fileFirstLineValueSlice[0].index].chunkChan
+		for ok {
+			fmt.Println(">>>>>>", e)
+			//fmt.Printf("+++: %d\n", e)
+			m.sortedDataChan <- e
+			e, ok = <-m.fileChunkSlice[fileFirstLineValueSlice[0].index].chunkChan
+		}
+
+		close(m.sortedDataChan)
 	}
-	if needAddedElements != 0 && len(validDataChanMap) != 0 {
-	loopCallChan:
-		for k, _ := range validDataChanMap {
-			if needAddedElements != 0 {
-				chunkFileProcessingIndex := m.fileChunkSlice[k]
-				e, ok := <-chunkFileProcessingIndex.chunkChan
-				if !ok {
-					chunkFileProcessingIndex.isProcessed = true
-					delete(validDataChanMap, k)
-				} else {
-					comparingDataSlice = append(comparingDataSlice, e)
-					needAddedElements--
-				}
-			}
-		}
-		if needAddedElements != 0 && len(validDataChanMap) != 0 {
-			goto loopCallChan
-		}
-	}
+	fmt.Printf(">>>>*****len(fileFirstLineValueSlice): %d \n", len(fileFirstLineValueSlice))
 
 	return nil
 }
@@ -186,12 +251,13 @@ func (m *mergence) writeFile() error {
 	}
 
 	w := bufio.NewWriterSize(f, m.writerBufferSize)
-
 	for {
-		if m.totalFileLines == 0 {
+		e, ok := <-m.sortedDataChan
+		if !ok {
+			fmt.Printf("<<<<<<>>>>>>close chan 'sortedDataChan': %d\n", m.totalFileLines)
 			break
 		}
-		e := <-m.sortedDataChan
+		//fmt.Printf("------: %d, e: %d\n", m.totalFileLines, e)
 		m.totalFileLines--
 		if _, err1 := w.Write([]byte(strconv.FormatInt(e, 10) + "\n")); err1 != nil {
 			fmt.Printf("failed to write number data : %s \n", err1.Error())

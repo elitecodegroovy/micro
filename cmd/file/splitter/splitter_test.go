@@ -111,6 +111,25 @@ func TestSingleQuota(t *testing.T) {
 	ss[3] = 2020
 	fmt.Println("\t", ss)
 
-	var sint64 []int64
-	fmt.Println(sint64)
+	//2097152
+	fmt.Println(691018 + 690649 + 655975 + 59510)
+	sss := []int{1, 2, 3, 4, 5, 6, 78, 0, 11, 232}
+	c1 := make(chan int, 5)
+	go func() {
+		for _, s := range sss {
+			c1 <- s
+		}
+		close(c1)
+	}()
+	time.Sleep(2 * time.Second)
+	go func() {
+		for {
+			c, ok := <-c1
+			if !ok {
+				fmt.Println("close c1...")
+				break
+			}
+			fmt.Println(c)
+		}
+	}()
 }

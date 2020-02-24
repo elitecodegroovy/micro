@@ -9,7 +9,7 @@ import (
 
 func main() {
 	var inputFilenamePath = flag.String("filenamePath", "bigLongTypeData.txt", "provide the filename for splitter")
-	var outputFileDir = flag.String("outputDir", "bigLongTypeData.txt", "provide the filename for splitter")
+	var outputFileDir = flag.String("outputDir", "data/default", "provide the filename for splitter")
 	var fileChunkSize = flag.Int64("fileChunkSize", 10485760, "provide the file chunk size for splitter (B unit), default 10485760")
 	flag.Parse()
 
@@ -21,10 +21,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	for i, item := range result {
-		if i == 3 {
-			break
-		}
+	for _, item := range result {
 		chunkFile, err := os.Open(item)
 		if err != nil {
 			fmt.Printf("err: %s \n", err.Error())

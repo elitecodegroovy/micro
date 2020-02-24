@@ -5,7 +5,9 @@ import (
 	"fmt"
 	buf "github.com/micro/micro/cmd/file/bufv2"
 	"github.com/micro/micro/cmd/file/memory"
+	"github.com/micro/micro/cmd/file/mergence"
 	"github.com/micro/micro/cmd/file/splitter"
+	"log"
 	"os"
 )
 
@@ -100,5 +102,11 @@ func main() {
 		}
 	}
 	fmt.Printf(">>>total lines: %d \n", fileLines)
+	if len(sortedFilenamePaths) != 0 {
+		m := mergence.New(*sortedFilename, fileLines, sortedFilenamePaths)
+		if err = m.Merge(); err != nil {
+			log.Fatal("..." + err.Error())
+		}
+	}
 
 }

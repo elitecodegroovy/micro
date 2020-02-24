@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	fileName = "bigLongTypeData.txt"
+	fileName = "data/bigLongTypeData.txt"
 )
 
 const newl = "\n"
