@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	buf "github.com/micro/micro/cmd/file/bufv2"
+	buf "github.com/micro/micro/cmd/file/buf"
 	"github.com/micro/micro/cmd/file/memory"
 	"github.com/micro/micro/cmd/file/mergence"
 	"github.com/micro/micro/cmd/file/splitter"
@@ -89,7 +89,8 @@ func main() {
 	//sort the data in each small file
 	for i, resultFilepath := range result {
 		fmt.Printf("%d > sort file %s \n", i, resultFilepath)
-		sortedFilenamePath, err := buf.SortDataInFile(resultFilepath, int(chunkFileSize/3), int(chunkFileSize))
+		sorter := buf.New(resultFilepath)
+		sortedFilenamePath, err := sorter.ReadFileByBulkBuffer()
 		if err != nil {
 			fmt.Println("buf.SortDataInFile :", err.Error())
 			return

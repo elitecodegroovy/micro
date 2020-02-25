@@ -112,7 +112,7 @@ func (f *fileChunk) SendDataToFileChunkChan() error {
 			f.fileBuffer = bytes.NewBuffer(append(f.brokenLine, bufBulk[:size]...))
 			f.brokenLine = []byte{}
 		} else {
-			f.fileBuffer = bytes.NewBuffer(append(f.brokenLine, bufBulk[:size]...))
+			f.fileBuffer = bytes.NewBuffer(bufBulk[:size])
 		}
 
 		if err = f.readLinesFromFileBuffer(); err != nil {

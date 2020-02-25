@@ -3,8 +3,9 @@ package buf
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
-	"golang.org/x/sync/errgroup"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -15,7 +16,10 @@ import (
 
 var (
 	bufferSize       = int64(os.Getpagesize() * 128)
-	writerBufferSize = 102400
+	writerBufferSize = getFileBufferSize() * 100
+	ErrBufferRead    = errors.New("bytes.Buffer: couldn't read file chunk")
+	ErrByteRead      = errors.New("couldn't read bytes from file buffer of file")
+	ErrLineRead      = errors.New("couldn't  parse bytesLine for the file ")
 )
 
 // IntSlice attaches the methods of Interface to []int, sorting in increasing order.
@@ -24,6 +28,21 @@ type Int64Slice []int64
 func (p Int64Slice) Len() int           { return len(p) }
 func (p Int64Slice) Less(i, j int) bool { return p[i] < p[j] }
 func (p Int64Slice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+
+type FileChunkInfo struct {
+	filename   string
+	brokenLine []byte
+	lines      int64
+	lineItems  []int64
+	fileBuffer *bytes.Buffer
+}
+
+func New(filename string) *FileChunkInfo {
+	return &FileChunkInfo{
+		filename:  filename,
+		lineItems: []int64{},
+	}
+}
 
 // It is a good choice if the elements is less than 12.
 func selectionSort(items []int64) {
@@ -39,45 +58,59 @@ func selectionSort(items []int64) {
 	}
 }
 
-func SortDataInFile(filename string, bufferSize, bufferSizeCapacity int) (string, error) {
-	writerBufferSize = bufferSize
+func getFileBufferSize() int64 {
+	return int64(os.Getpagesize() * 128)
+}
 
+func (f FileChunkInfo) ReadFileByBulkBuffer() (string, error) {
 	t := time.Now()
-	file, err := os.Open(filename)
+	file, err := os.Open(f.filename)
 	if err != nil {
 		println(err)
 	}
 	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
-	//set buffer block size 10M
-	buf := make([]byte, 0, bufferSize)
-
-	// Buffer sets the initial buffer to use when scanning and the maximum
-	// size of buffer that may be allocated during scanning.
-	//1G cap
-	scanner.Buffer(buf, bufferSizeCapacity)
-
-	var i int64
-	//16 M
-	var originalData []int64
-	for scanner.Scan() {
-		i++
-		line := strings.Trim(scanner.Text(), " \n")
-		if line == "" {
-			continue
+	bufBulk := make([]byte, getFileBufferSize())
+	for {
+		//Read bulk from file
+		size, err := file.Read(bufBulk)
+		fmt.Printf(">>>>>>>>>size:%d \n", size)
+		if err == io.EOF {
+			fmt.Println("***close chan >" + f.filename + ", lines :" + strconv.FormatInt(f.lines, 10) + "\n")
+			break
 		}
-		//fmt.Printf("%d %s", i, scanner.Text())
-
-		number, err := strconv.ParseInt(line, 10, 64)
 		if err != nil {
-			fmt.Printf("[%s]\n", line)
+			return "", ErrBufferRead
 		}
-		originalData = append(originalData, number)
+		if len(f.brokenLine) > 0 {
+			f.fileBuffer = bytes.NewBuffer(append(f.brokenLine, bufBulk[:size]...))
+			f.brokenLine = []byte{}
+		} else {
+			f.fileBuffer = bytes.NewBuffer(bufBulk[:size])
+		}
+
+		for {
+			bytesLine, err := f.fileBuffer.ReadBytes('\n')
+			if err == io.EOF {
+				f.brokenLine = bytesLine
+				f.fileBuffer.Reset()
+				break
+			}
+			if err != nil {
+				return "", ErrByteRead
+			}
+
+			v := strings.Trim(string(bytesLine), " \n")
+			e, err := strconv.ParseInt(v, 10, 64)
+			if err != nil {
+				return "", ErrLineRead
+			}
+			f.lineItems = append(f.lineItems, e)
+		}
 	}
 	fmt.Printf("read file time: %f \n", time.Since(t).Seconds())
 
-	return sortOriginalData(originalData, filename)
+	return sortOriginalData(f.lineItems, f.filename)
 }
 
 func sortOriginalData(originalData []int64, filename string) (string, error) {
@@ -108,15 +141,16 @@ func writeDataToFile(int64DataSlice []int64, filename string) (string, error) {
 
 	//100K buffer writer size,
 	//3.223659s
-	w := bufio.NewWriterSize(f, writerBufferSize)
+	w := bufio.NewWriterSize(f, int(writerBufferSize))
 	//3.372287 s
 	//w := bufio.NewWriter(f)
-	for _, data := range int64DataSlice {
+	for len(int64DataSlice) > 0 {
 		//print(">")
-		if _, err1 := w.Write([]byte(strconv.FormatInt(data, 10) + "\n")); err1 != nil {
+		if _, err1 := w.Write([]byte(strconv.FormatInt(int64DataSlice[0], 10) + "\n")); err1 != nil {
 			fmt.Printf("failed to write number data : %s \n", err1.Error())
 			return "", err
 		}
+		int64DataSlice = append(int64DataSlice[:0], int64DataSlice[1:]...)
 	}
 	if err = w.Flush(); err != nil {
 		fmt.Printf("w.Flush() error  : %s \n ", err.Error())
@@ -133,8 +167,13 @@ func writeDataToFile(int64DataSlice []int64, filename string) (string, error) {
 //It extracts name and extension from path
 func GetFileNameInfo(path string) (string, string, string) {
 	split := strings.Split(path, string(filepath.Separator))
-	//file directory path
-	fileBase := strings.Join(split[:len(split)-2], string(filepath.Separator))
+	var fileBase string
+	if len(split) == 2 {
+		fileBase = split[0]
+	} else {
+		//file directory path
+		fileBase = strings.Join(split[:len(split)-2], string(filepath.Separator))
+	}
 	//file name
 	name := split[len(split)-1]
 
@@ -144,57 +183,4 @@ func GetFileNameInfo(path string) (string, string, string) {
 	name = strings.Join(nameSlice, "")
 
 	return fileBase, name, ext
-}
-
-// 314.925621
-func writeDataToFileV0(int64DataSlice []int64, filename string) {
-	t := time.Now()
-	var g errgroup.Group
-	bulkBuffer := bytes.NewBuffer(make([]byte, 0, bufferSize))
-	f, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, os.ModePerm)
-
-	if err != nil {
-		fmt.Printf("failed to open file : %s ", err.Error())
-		os.Exit(1)
-	}
-
-	orderDataChan := make(chan int64, bufferSize)
-	defer close(orderDataChan)
-
-	sliceSize := len(int64DataSlice)
-	g.Go(func() error {
-		for len(int64DataSlice) > 0 {
-			orderDataChan <- int64DataSlice[0]
-			int64DataSlice = append(int64DataSlice[:0], int64DataSlice[1:]...)
-		}
-		return nil
-	})
-
-	g.Go(func() error {
-		for {
-			if sliceSize == 0 {
-				return nil
-			}
-			v, ok := <-orderDataChan
-			if ok {
-				sliceSize -= 1
-				if _, err := bulkBuffer.Write([]byte(strconv.FormatInt(v, 10) + "\n")); err != nil {
-					fmt.Printf("failed to write number data : %s ", err.Error())
-					os.Exit(1)
-				}
-				if int64(bulkBuffer.Len()) >= (bufferSize - 1024) {
-					if _, err = f.Write(bulkBuffer.Bytes()); err != nil {
-						fmt.Printf("failed to write []byte for a file. Err : %s ", err.Error())
-						os.Exit(1)
-					}
-					bulkBuffer.Reset()
-				}
-			}
-		}
-	})
-	if err := g.Wait(); err != nil {
-		fmt.Println("error ing.Wait() , error " + err.Error())
-	}
-	//writing sort order time: 389.195321
-	fmt.Printf("writing sort order time: %f \n", time.Since(t).Seconds())
 }

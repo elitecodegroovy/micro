@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"github.com/micro/micro/cmd/file/bufv2"
+	"github.com/micro/micro/cmd/file/buf"
 	"io/ioutil"
 	"log"
 	"regexp"
@@ -39,9 +39,10 @@ func main() {
 
 	for i := 0; i < len(filenames); i++ {
 		log.Printf("filename: %s", filenames[i])
-		//buf.ShowMemoryInfo()
-		buf.SortDataInFile(filenames[i], 10*1024*1024, 100*1024*1024)
-		//buf.Done()
+		//memory.DoGoMemoryStatics()
+		sorter := buf.New(filenames[i])
+		sorter.ReadFileByBulkBuffer()
+		//memory.Done()
 	}
 
 }

@@ -32,7 +32,7 @@ func bToMb(b uint64) float64 {
 	return float64(b) / float64(1024) / float64(1024)
 }
 
-func DoStaticMemory() {
+func DoGoMemoryStatics() {
 	ticker := time.NewTicker(time.Millisecond * 10)
 	defer ticker.Stop()
 	for {
