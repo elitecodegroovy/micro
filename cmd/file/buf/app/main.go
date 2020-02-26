@@ -39,9 +39,8 @@ func main() {
 
 	for i := 0; i < len(filenames); i++ {
 		log.Printf("filename: %s", filenames[i])
-		//memory.DoGoMemoryStatics()
-		sorter := buf.New(filenames[i])
-		sorter.ReadFileByBulkBuffer()
+		//go memory.DoGoMemoryStatics()
+		buf.DoSortOpts(filenames[i])
 		//memory.Done()
 	}
 

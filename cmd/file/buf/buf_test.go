@@ -28,5 +28,10 @@ func TestSort(t *testing.T) {
 }
 
 func TestVar(t *testing.T) {
-	fmt.Println(">>>", bufferSize)
+	baseDir, file, _ := GetFileNameInfo("data/aaaa.txt")
+	fmt.Println(">>>", baseDir, file)
+
+	baseDir, file, _ = GetFileNameInfo("aaaa.txt")
+	fmt.Println(">>>", baseDir, file)
+
 }

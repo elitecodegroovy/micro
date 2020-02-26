@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"github.com/micro/micro/cmd/file/buf"
 	"golang.org/x/sync/errgroup"
 	"io"
 	"os"
@@ -76,7 +77,7 @@ func (f *fileChunk) readLinesFromFileBuffer() error {
 		v := strings.Trim(string(bytesLine), " \n")
 		e, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
-			fmt.Printf("Couldn't  parse bytesLine for the file %s : %v", f.filename, err)
+			fmt.Printf("Couldn't  parse bytesLine for the file %s : %v. \n %s", f.filename, err, v)
 			return err
 		}
 		f.chunkChan <- e
@@ -98,10 +99,9 @@ func (f *fileChunk) SendDataToFileChunkChan() error {
 	for {
 		//Read bulk from file
 		size, err := file.Read(bufBulk)
-		fmt.Printf(">>>>>>>>>size:%d \n", size)
 		if err == io.EOF {
 			close(f.chunkChan)
-			fmt.Println("***close chan >" + f.filename + ", lines :" + strconv.FormatInt(f.lines, 10))
+			//fmt.Println("***close chan >" + f.filename + ", lines :" + strconv.FormatInt(f.lines, 10))
 			break
 		}
 		if err != nil && err != io.EOF {
@@ -228,7 +228,7 @@ loopCall:
 		m.sortedDataChan <- fileFirstLineValueSlice[0].value
 		e, ok := <-m.fileChunkSlice[fileFirstLineValueSlice[0].index].chunkChan
 		for ok {
-			fmt.Println(">>>>>>", e)
+			//fmt.Println(">>>>>>", e)
 			//fmt.Printf("+++: %d\n", e)
 			m.sortedDataChan <- e
 			e, ok = <-m.fileChunkSlice[fileFirstLineValueSlice[0].index].chunkChan
@@ -236,7 +236,7 @@ loopCall:
 
 		close(m.sortedDataChan)
 	}
-	fmt.Printf(">>>>*****len(fileFirstLineValueSlice): %d \n", len(fileFirstLineValueSlice))
+	//fmt.Printf(">>>>*****len(fileFirstLineValueSlice): %d \n", len(fileFirstLineValueSlice))
 
 	return nil
 }
@@ -254,7 +254,7 @@ func (m *mergence) writeFile() error {
 	for {
 		e, ok := <-m.sortedDataChan
 		if !ok {
-			fmt.Printf("<<<<<<>>>>>>close chan 'sortedDataChan': %d\n", m.totalFileLines)
+			//fmt.Printf("<<<<<<>>>>>>close chan 'sortedDataChan': %d\n", m.totalFileLines)
 			break
 		}
 		//fmt.Printf("------: %d, e: %d\n", m.totalFileLines, e)
@@ -273,9 +273,10 @@ func (m *mergence) writeFile() error {
 		fmt.Printf("w.Flush() error  : %s \n ", err.Error())
 		return err
 	}
-	fmt.Printf("writing sorted elemented to the target file '%s' time: %f \n",
+	fmt.Printf("\noutput file path : '%s' , writing time: %f \n",
 		m.targetFilePath,
 		time.Since(t).Seconds())
 
+	buf.CleanBufferCacheOfOS()
 	return nil
 }

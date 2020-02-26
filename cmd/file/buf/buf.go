@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -15,8 +17,7 @@ import (
 )
 
 var (
-	bufferSize       = int64(os.Getpagesize() * 128)
-	writerBufferSize = getFileBufferSize() * 100
+	writerBufferSize = getFileBufferSize() * 128
 	ErrBufferRead    = errors.New("bytes.Buffer: couldn't read file chunk")
 	ErrByteRead      = errors.New("couldn't read bytes from file buffer of file")
 	ErrLineRead      = errors.New("couldn't  parse bytesLine for the file ")
@@ -62,8 +63,19 @@ func getFileBufferSize() int64 {
 	return int64(os.Getpagesize() * 128)
 }
 
-func (f FileChunkInfo) ReadFileByBulkBuffer() (string, error) {
-	t := time.Now()
+func DoSortOpts(filename string) string {
+	var outputFileName string
+	var err error
+	sorter := New(filename)
+	if outputFileName, err = sorter.ReadFileByBulkBuffer(); err != nil {
+		fmt.Println("err: " + err.Error())
+	}
+	return outputFileName
+
+}
+
+func (f *FileChunkInfo) ReadFileByBulkBuffer() (string, error) {
+	//t := time.Now()
 	file, err := os.Open(f.filename)
 	if err != nil {
 		println(err)
@@ -74,9 +86,9 @@ func (f FileChunkInfo) ReadFileByBulkBuffer() (string, error) {
 	for {
 		//Read bulk from file
 		size, err := file.Read(bufBulk)
-		fmt.Printf(">>>>>>>>>size:%d \n", size)
+		//fmt.Printf(">>>>>>>>>size:%d \n", size)
 		if err == io.EOF {
-			fmt.Println("***close chan >" + f.filename + ", lines :" + strconv.FormatInt(f.lines, 10) + "\n")
+			//fmt.Println("***file>" + f.filename + ", lines :" + strconv.FormatInt(f.lines, 10) + "\n")
 			break
 		}
 		if err != nil {
@@ -101,14 +113,19 @@ func (f FileChunkInfo) ReadFileByBulkBuffer() (string, error) {
 			}
 
 			v := strings.Trim(string(bytesLine), " \n")
+			if len(v) == 0 {
+				continue
+			}
 			e, err := strconv.ParseInt(v, 10, 64)
 			if err != nil {
+				fmt.Println("------------v:[", v+"]")
 				return "", ErrLineRead
 			}
+			f.lines++
 			f.lineItems = append(f.lineItems, e)
 		}
 	}
-	fmt.Printf("read file time: %f \n", time.Since(t).Seconds())
+	//fmt.Printf("read file time: %f \n", time.Since(t).Seconds())
 
 	return sortOriginalData(f.lineItems, f.filename)
 }
@@ -126,12 +143,18 @@ func sortOriginalData(originalData []int64, filename string) (string, error) {
 	//Done()
 }
 
-//writing sort order time: 302.858123 for 1.2G
+//writeDataToFile sort order time: 302.858123 for 1.2G
 //writing sort order time: 3.431778  for 15M
 func writeDataToFile(int64DataSlice []int64, filename string) (string, error) {
-	t := time.Now()
-	baseBase, inputFilename, ext := GetFileNameInfo(filename)
-	sortedFilenamePath := baseBase + string(filepath.Separator) + inputFilename + "Sorted." + ext
+	//t := time.Now()
+	baseDir, inputFilename, ext := GetFileNameInfo(filename)
+	var sortedFilenamePath string
+	if len(baseDir) == 0 {
+		sortedFilenamePath = inputFilename + "Sorted." + ext
+	} else {
+		sortedFilenamePath = baseDir + string(filepath.Separator) + inputFilename + "Sorted." + ext
+	}
+
 	f, err := os.OpenFile(sortedFilenamePath, os.O_CREATE|os.O_WRONLY, os.ModePerm)
 
 	if err != nil {
@@ -140,17 +163,14 @@ func writeDataToFile(int64DataSlice []int64, filename string) (string, error) {
 	}
 
 	//100K buffer writer size,
-	//3.223659s
 	w := bufio.NewWriterSize(f, int(writerBufferSize))
-	//3.372287 s
 	//w := bufio.NewWriter(f)
-	for len(int64DataSlice) > 0 {
+	for _, item := range int64DataSlice {
 		//print(">")
-		if _, err1 := w.Write([]byte(strconv.FormatInt(int64DataSlice[0], 10) + "\n")); err1 != nil {
+		if _, err1 := w.Write([]byte(strconv.FormatInt(item, 10) + "\n")); err1 != nil {
 			fmt.Printf("failed to write number data : %s \n", err1.Error())
 			return "", err
 		}
-		int64DataSlice = append(int64DataSlice[:0], int64DataSlice[1:]...)
 	}
 	if err = w.Flush(); err != nil {
 		fmt.Printf("w.Flush() error  : %s \n ", err.Error())
@@ -160,22 +180,28 @@ func writeDataToFile(int64DataSlice []int64, filename string) (string, error) {
 		fmt.Printf("w.Flush() error  : %s \n ", err.Error())
 		return "", err
 	}
-	fmt.Printf("writing sort order time: %f \n", time.Since(t).Seconds())
+	//fmt.Printf("writing sort order time: %f \n", time.Since(t).Seconds())
+
+	//clean the buff/cache item in OS
+	int64DataSlice = []int64{}
+	CleanBufferCacheOfOS()
 	return sortedFilenamePath, nil
 }
 
-//It extracts name and extension from path
+//GetFileNameInfo extracts name and extension from path
 func GetFileNameInfo(path string) (string, string, string) {
 	split := strings.Split(path, string(filepath.Separator))
-	var fileBase string
-	if len(split) == 2 {
+	var fileBase, name string
+	if len(split) == 1 {
+		fileBase = ""
+	} else if len(split) == 2 {
 		fileBase = split[0]
 	} else {
 		//file directory path
 		fileBase = strings.Join(split[:len(split)-2], string(filepath.Separator))
 	}
 	//file name
-	name := split[len(split)-1]
+	name = split[len(split)-1]
 
 	split = strings.Split(name, ".")
 	ext := split[len(split)-1]
@@ -183,4 +209,20 @@ func GetFileNameInfo(path string) (string, string, string) {
 	name = strings.Join(nameSlice, "")
 
 	return fileBase, name, ext
+}
+
+//CleanBufferCacheOfOS need the root user authorization. clean the buff/cache in OS.
+func CleanBufferCacheOfOS() {
+	if runtime.GOOS == "linux" {
+		if err := exec.Command("echo", "1", "> /proc/sys/vm/drop_caches").Run(); err != nil {
+			fmt.Println("exec cmd with an error :", err.Error())
+		}
+		if err := exec.Command("echo", "2", "> /proc/sys/vm/drop_caches").Run(); err != nil {
+			fmt.Println("exec cmd with an error :", err.Error())
+		}
+		if err := exec.Command("echo", "3", "> /proc/sys/vm/drop_caches").Run(); err != nil {
+			fmt.Println("exec cmd with an error :", err.Error())
+		}
+	}
+
 }

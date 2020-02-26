@@ -62,7 +62,7 @@ func generateRandomLongNum(totalNum int64) {
 }
 
 func main() {
-	var totalNum = flag.Int64("total", 1024, "total loop round")
+	var totalNum = flag.Int64("total", 1024*100, "total loop round")
 	flag.Parse()
 
 	//step 1

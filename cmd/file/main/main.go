@@ -9,54 +9,30 @@ import (
 	"github.com/micro/micro/cmd/file/splitter"
 	"log"
 	"os"
+	"time"
 )
 
 var filename = flag.String("filename", "data/bigLongTypeData.txt", "provide the input filename, default filename 'data/bigLongTypeData.txt'")
-var splitN = flag.Int64("split-n", 5, "split to N file.")
+var maxChunkFileSize = flag.Int64("maxChunkFileSize", int64(memory.GetFreeCache()/3), "max chunk file size, default the `osFreeCache/3`")
 var sortedFilename = flag.String("sorted-filename", "data/sortedBigLongTypeData.txt", "provide the output filename, default sorted data file filename 'data/sortedBigLongTypeData.txt'")
 var outputDir = flag.String("output-dir", "data/default", "provide the ouput data directory , default is directory 'data/default'")
-var chunkFileSize int64
+var debug = flag.Bool("debug", false, "print the debug info, default is false.")
 
 //validateInputParameters does the validation work in order to make sure that free memory is
 //enough for file I/O opts.
 func validateInputParameters() bool {
-	//max allowed file size.
-	var maxChunkFileSize int64
-	file, err := os.Open(*filename)
-	if err != nil {
-		fmt.Println(" os.Open filename error :", err.Error())
-		return false
-	}
-	defer file.Close()
-
-	fileInfo, err := os.Stat(*filename)
-	if err != nil {
-		fmt.Println("os.Stat filename error :", err.Error())
-		return false
-	}
-	fileSize := fileInfo.Size()
-
-	if fileSize%(*splitN) == 0 {
-		maxChunkFileSize = fileSize / (*splitN)
-
-	} else {
-		addedPartition := fileSize % (*splitN)
-		maxChunkFileSize = addedPartition + fileSize/(*splitN)
-	}
-	if maxChunkFileSize > int64(memory.GetFreeCache()/2) {
+	if *maxChunkFileSize > int64(memory.GetFreeCache()/2) {
 		fmt.Println("each chunk file size is too big. please provide a valid parameter 'split-n', which default is 10.")
 		return false
 	}
-	chunkFileSize = maxChunkFileSize
-
 	return true
 }
 
 func splitFile() ([]string, int64, error) {
 	splitter := splitter.New()
 
-	splitter.FileChunkSize = chunkFileSize
-	fmt.Println("max chunk file size :", splitter.FileChunkSize, "K")
+	splitter.FileChunkSize = *maxChunkFileSize
+	fmt.Println("os RAM free ", memory.GetFreeCache()/1024/1024, "M, max chunk file size :", splitter.FileChunkSize/1024/1024, "M")
 
 	result, err := splitter.Split(*filename, *outputDir)
 	if err != nil {
@@ -66,7 +42,18 @@ func splitFile() ([]string, int64, error) {
 	return result, splitter.BigFileTotalLineNumber, nil
 }
 
+func clearTempFiles(filenames []string) {
+	if len(filenames) > 0 {
+		for _, filename := range filenames {
+			if err := os.Remove(filename); err != nil {
+				fmt.Println("os.Remove file path ", filename, " with an error. ", err.Error())
+			}
+		}
+	}
+}
+
 func main() {
+	t := time.Now()
 	flag.Parse()
 
 	if !validateInputParameters() {
@@ -80,15 +67,15 @@ func main() {
 		fmt.Println("splitFile splits big file with an error :", err.Error())
 		return
 	}
-	fmt.Println("output file info :", result)
+	//fmt.Println("output file info :", result)
 	if len(result) == 0 {
 		fmt.Println("failed ...error occurred in server internal.", result)
 	}
 
 	var sortedFilenamePaths []string
 	//sort the data in each small file
-	for i, resultFilepath := range result {
-		fmt.Printf("%d > sort file %s \n", i, resultFilepath)
+	for _, resultFilepath := range result {
+
 		sorter := buf.New(resultFilepath)
 		sortedFilenamePath, err := sorter.ReadFileByBulkBuffer()
 		if err != nil {
@@ -102,12 +89,16 @@ func main() {
 			return
 		}
 	}
-	fmt.Printf(">>>total lines: %d \n", fileLines)
+	fmt.Printf(">>>total lines(include the empty line): %d \n", fileLines)
 	if len(sortedFilenamePaths) != 0 {
 		m := mergence.New(*sortedFilename, fileLines, sortedFilenamePaths)
 		if err = m.Merge(); err != nil {
 			log.Fatal("..." + err.Error())
 		}
 	}
+	fmt.Println("--------------------------------------------")
+	fmt.Printf("----------total time elapsed %fs------------\n", time.Since(t).Seconds())
+	fmt.Println("--------------------------------------------")
 
+	clearTempFiles(append(result, sortedFilenamePaths...))
 }

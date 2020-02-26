@@ -33,7 +33,7 @@ func bToMb(b uint64) float64 {
 }
 
 func DoGoMemoryStatics() {
-	ticker := time.NewTicker(time.Millisecond * 10)
+	ticker := time.NewTicker(time.Millisecond * 500)
 	defer ticker.Stop()
 	for {
 		select {
