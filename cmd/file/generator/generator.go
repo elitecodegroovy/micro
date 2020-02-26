@@ -68,5 +68,4 @@ func main() {
 
 	//step 1
 	generateRandomLongNum(*totalNum)
-
 }
