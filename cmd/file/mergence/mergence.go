@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/micro/micro/cmd/file/buf"
 	"golang.org/x/sync/errgroup"
 	"io"
 	"os"
@@ -209,7 +208,7 @@ func (m *mergence) compareLineValueForEachFile() error {
 			fileFirstLineValueSlice = append(fileFirstLineValueSlice, item)
 		}
 	}
-loopCall:
+loop:
 	if len(fileFirstLineValueSlice) > 1 {
 		sortItems(fileFirstLineValueSlice)
 
@@ -223,7 +222,7 @@ loopCall:
 		} else {
 			fileFirstLineValueSlice[0].value = e
 		}
-		goto loopCall
+		goto loop
 	} else if len(fileFirstLineValueSlice) == 1 {
 		m.sortedDataChan <- fileFirstLineValueSlice[0].value
 		e, ok := <-m.fileChunkSlice[fileFirstLineValueSlice[0].index].chunkChan
@@ -277,6 +276,5 @@ func (m *mergence) writeFile() error {
 		m.targetFilePath,
 		time.Since(t).Seconds())
 
-	buf.CleanBufferCacheOfOS()
 	return nil
 }
