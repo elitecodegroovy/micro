@@ -3,6 +3,8 @@ package memory
 import (
 	"fmt"
 	"github.com/micro/micro/mem"
+	"os"
+	"os/exec"
 	"runtime"
 	"time"
 )
@@ -53,4 +55,42 @@ func GetFreeCache() uint64 {
 
 func Done() {
 	done <- true
+}
+
+//CleanBufferCacheOfOS need the root user authorization. clean the buff/cache in OS.
+func CleanBufferCacheOfOS() {
+
+	fmt.Println("runtime.GOOS : ", runtime.GOOS)
+	if runtime.GOOS == "linux" {
+		cmd := exec.Command("echo", "1")
+		file, err := os.Open("/proc/sys/vm/drop_caches")
+		cmd.Stdout = file
+		if err != nil {
+			fmt.Println("open file with an error :", err.Error())
+		}
+		if err := cmd.Start(); err != nil {
+			fmt.Println("exec start 1 with an error :", err.Error())
+		}
+
+		if err := cmd.Wait(); err != nil {
+			fmt.Println("exec wait with an error :", err.Error())
+		}
+
+		cmd = exec.Command("echo", "2")
+		if err := cmd.Start(); err != nil {
+			fmt.Println("exec start 2 with an error :", err.Error())
+		}
+		if err := cmd.Wait(); err != nil {
+			fmt.Println("exec wait2 with an error :", err.Error())
+		}
+
+		cmd = exec.Command("echo", "3")
+		if err := cmd.Start(); err != nil {
+			fmt.Println("exec start3 with an error :", err.Error())
+		}
+		if err := cmd.Wait(); err != nil {
+			fmt.Println("exec wait3 with an error :", err.Error())
+		}
+	}
+
 }
