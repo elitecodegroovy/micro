@@ -15,7 +15,7 @@ import (
 var filename = flag.String("filename", "data/bigLongTypeData.txt", "provide the input filename, default filename 'data/bigLongTypeData.txt'")
 var maxChunkFileSize = flag.Int64("maxChunkFileSize", int64(memory.GetFreeCache()/3), "max chunk file size, default the `osFreeCache/3`")
 var sortedFilename = flag.String("sorted-filename", "data/sortedBigLongTypeData.txt", "provide the output filename, default sorted data file filename 'data/sortedBigLongTypeData.txt'")
-var outputDir = flag.String("output-dir", "data/default", "provide the ouput data directory , default is directory 'data/default'")
+var tempOutputDir = flag.String("temp-output-dir", "data/default", "provide the ouput data directory , default is directory 'data/default'")
 var debug = flag.Bool("debug", false, "print the debug info, default is false.")
 
 //validateInputParameters does the validation work in order to make sure that free memory is
@@ -34,7 +34,7 @@ func splitFile() ([]string, int64, error) {
 	splitter.FileChunkSize = *maxChunkFileSize
 	fmt.Println("os RAM free ", memory.GetFreeCache()/1024/1024, "M, max chunk file size :", splitter.FileChunkSize/1024/1024, "M")
 
-	result, err := splitter.Split(*filename, *outputDir)
+	result, err := splitter.Split(*filename, *tempOutputDir)
 	if err != nil {
 		fmt.Println("do split big file with an error :", err.Error())
 		return nil, 0, err
