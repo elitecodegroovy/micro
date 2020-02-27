@@ -101,4 +101,5 @@ func main() {
 	fmt.Println("--------------------------------------------")
 
 	clearTempFiles(append(result, sortedFilenamePaths...))
+	//memory.CleanBufferCacheOfOS()
 }

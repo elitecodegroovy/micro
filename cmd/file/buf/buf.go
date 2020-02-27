@@ -7,9 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -184,7 +182,7 @@ func writeDataToFile(int64DataSlice []int64, filename string) (string, error) {
 
 	//clean the buff/cache item in OS
 	int64DataSlice = []int64{}
-	CleanBufferCacheOfOS()
+	//memory.CleanBufferCacheOfOS()
 	return sortedFilenamePath, nil
 }
 
@@ -209,20 +207,4 @@ func GetFileNameInfo(path string) (string, string, string) {
 	name = strings.Join(nameSlice, "")
 
 	return fileBase, name, ext
-}
-
-//CleanBufferCacheOfOS need the root user authorization. clean the buff/cache in OS.
-func CleanBufferCacheOfOS() {
-	if runtime.GOOS == "linux" {
-		if err := exec.Command("echo", "1", "> /proc/sys/vm/drop_caches").Run(); err != nil {
-			fmt.Println("exec cmd with an error :", err.Error())
-		}
-		if err := exec.Command("echo", "2", "> /proc/sys/vm/drop_caches").Run(); err != nil {
-			fmt.Println("exec cmd with an error :", err.Error())
-		}
-		if err := exec.Command("echo", "3", "> /proc/sys/vm/drop_caches").Run(); err != nil {
-			fmt.Println("exec cmd with an error :", err.Error())
-		}
-	}
-
 }
