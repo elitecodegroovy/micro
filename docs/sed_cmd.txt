@@ -1,0 +1,9 @@
+格式: sed -i "s/查找字段/替换字段/g" `grep 查找字段 -rl 路径`
+
+　　linux sed 批量替换多个文件中的字符串
+
+　　sed -i "s/oldstring/newstring/g" `grep oldstring -rl yourdir`
+
+
+
+　　

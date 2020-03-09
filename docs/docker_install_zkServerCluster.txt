@@ -1,0 +1,25 @@
+docker run -d --restart=always --name zkServerCluster  \
+      -p 2181:2181 \
+      -p 2888:2888 \
+      -p 3888:3888 \
+      -v /var/lib/zookeeper:/var/lib/zookeeper \
+      -v /var/log/zookeeper:/var/log/zookeeper  \
+      jeygeethan/zookeeper-cluster 192.168.1.101,192.168.1.229,192.168.1.221 1
+	  
+	  
+docker run -d --restart=always --name zkServerCluster \
+      -p 2181:2181 \
+      -p 2888:2888 \
+      -p 3888:3888 \
+      -v /var/lib/zookeeper:/var/lib/zookeeper \
+      -v /var/log/zookeeper:/var/log/zookeeper  \
+      jeygeethan/zookeeper-cluster 192.168.1.101,192.168.1.229,192.168.1.221 2
+	  
+	  
+docker run -d --restart=always --name zkServerCluster  \
+      -p 2181:2181 \
+      -p 2888:2888 \
+      -p 3888:3888 \
+      -v /var/lib/zookeeper:/var/lib/zookeeper \
+      -v /var/log/zookeeper:/var/log/zookeeper  \
+      jeygeethan/zookeeper-cluster 192.168.1.101,192.168.1.229,192.168.1.221 3
