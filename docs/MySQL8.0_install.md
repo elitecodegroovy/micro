@@ -11,6 +11,11 @@ rpm -Uvh mysql-community-server-8.0.16-2.el7.x86_64.rpm
 
 ```
 
+```shell script
+groupadd mysql 
+useradd -r -g mysql -s /bin/false mysql
+```
+
 
 
 ## my.cnf配置
