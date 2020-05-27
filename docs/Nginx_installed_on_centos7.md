@@ -78,25 +78,31 @@ Our configuration options
         cd nginx
         
         ./configure \
-        --user=nginx                          \
-        --group=nginx                         \
-        --prefix=/etc/nginx                   \
-        --sbin-path=/usr/sbin/nginx           \
-        --conf-path=/etc/nginx/nginx.conf     \
-        --pid-path=/var/run/nginx.pid         \
-        --lock-path=/var/run/nginx.lock       \
-        --error-log-path=/var/log/nginx/error.log \
-        --http-log-path=/var/log/nginx/access.log \
+        --user=nginx                                \
+        --group=nginx                               \
+        --prefix=/opt/nginx                         \
+        --sbin-path=/opt/nginx/sbin/nginx           \
+        --conf-path=/opt/nginx/conf/nginx.conf      \
+        --pid-path=/opt/nginx/nginx.pid               \
+        --lock-path=/opt/nginx/nginx.lock             \
+        --error-log-path=/opt/nginx/logs/error.log  \
+        --http-log-path=/opt/nginx/logs/access.log  \
         --with-http_gzip_static_module        \
+        --with-http_addition_module           \
+        --with-jemalloc=/opt/jemalloc         \
         --with-http_stub_status_module        \
         --with-http_ssl_module                \
+        --with-openssl=                       \
+        --with-http_realip_module             \
+        --with-http_v2_module                 \
         --with-pcre                           \
         --with-file-aio                       \
         --with-http_realip_module             \
         --without-http_scgi_module            \
         --without-http_uwsgi_module           \
         --without-http_fastcgi_module         \
-        --with-stream
+        --with-stream                         \
+        --add-module=/home/app/ngx_http_geoip2_module
 ```
 
 Compiling the nginx source

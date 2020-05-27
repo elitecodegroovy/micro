@@ -15,6 +15,33 @@ cd jemalloc-3.6.0.tar.bz2
 make 
 ```
 
+## 安装geoip2 lib步骤
+
+```
+cd /usr/local/src
+rm -f libmaxminddb-1.4.2.tar.gz
+wget https://github.com/maxmind/libmaxminddb/releases/download/1.4.2/libmaxminddb-1.4.2.tar.gz
+tar -xzf libmaxminddb-1.4.2.tar.gz
+cd libmaxminddb-1.4.2
+yum install gcc gcc-c++ make -y
+./configure
+make
+make check
+sudo make install
+
+echo '/usr/local/lib' > /etc/ld.so.conf.d/geoip.conf
+sudo ldconfig
+```
+
+## ngx_http_geoip2_module 模块
+
+``` 
+
+cd /usr/local/src
+wget https://github.com/leev/ngx_http_geoip2_module/archive/3.3.tar.gz
+tar -xzf 3.3.tar.gz
+mv ngx_http_geoip2_module-3.3 ngx_http_geoip2_module 
+```
 ## Install Teninge
 
 ```
@@ -23,6 +50,39 @@ make
 --with-http_gzip_static_module \
 --with-http_realip_module \
 --with-http_stub_status_module 
+
+make && make install
+```
+
+or 
+
+``` 
+ ./configure \
+        --user=nginx                                \
+        --group=nginx                               \
+        --prefix=/opt/nginx                         \
+        --sbin-path=/opt/nginx/sbin/nginx           \
+        --conf-path=/opt/nginx/conf/nginx.conf      \
+        --pid-path=/opt/nginx/nginx.pid               \
+        --lock-path=/opt/nginx/nginx.lock             \
+        --error-log-path=/opt/nginx/logs/error.log  \
+        --http-log-path=/opt/nginx/logs/access.log  \
+        --with-http_gzip_static_module                \
+        --with-http_addition_module                   \
+        --with-jemalloc=/opt/jemalloc                 \
+        --with-http_stub_status_module                \
+        --with-http_ssl_module                        \
+        --with-openssl=                               \
+        --with-http_realip_module                     \
+        --with-http_v2_module                         \
+        --with-pcre                                   \
+        --with-file-aio                               \
+        --with-http_realip_module                     \
+        --without-http_scgi_module                    \
+        --without-http_uwsgi_module                   \
+        --without-http_fastcgi_module                 \
+        --with-stream                                 \
+        --add-module=/home/app/ngx_http_geoip2_module \
 
 make && make install
 ```
