@@ -43,6 +43,11 @@ grant all privileges  on *.* to root@'%' identified by "password";
 flush privileges;
 ```
 
+root user privileges: 
+``` 
+GRANT ALL PRIVILEGES ON *.* TO 'myuser'@'192.168.1.3' IDENTIFIED BY 'mypassword' WITH GRANT OPTION;  
+FLUSH   PRIVILEGES;
+```
 
 ### 乱码
 
