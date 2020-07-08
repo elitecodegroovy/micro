@@ -250,6 +250,7 @@ systemctl enable nginx
 
 ```
 #启动
+
 service nginx start
 #停止
 service nginx stop
