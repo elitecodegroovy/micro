@@ -1,4 +1,10 @@
 
+新建tengine用户组
+
+```  
+groupadd -r nginx
+useradd -r -g nginx -M nginx
+```
 
 
 ## Install Dependencies
@@ -54,6 +60,7 @@ mv ngx_http_geoip2_module-3.3 ngx_http_geoip2_module
 make && make install
 ```
 
+
 or 
 
 ``` 
@@ -85,6 +92,14 @@ or
         --add-module=/home/app/ngx_http_geoip2_module \
 
 make && make install
+```
+
+
+更改tengine的权限，将该目录给Nginx用户
+
+```
+chown -R nginx:nginx /opt/nginx
+chmod -R 755 /opt/nginx
 ```
 
 ## script
