@@ -3,10 +3,11 @@
 ```
 vi /etc/sysctl.conf
 
-#file-max是内核可分配的最大文件数
-fs.file-max = 202400 
-#nr_open是单个进程可分配的最大文件数
-fs.nr_open = 102400 
+fs.file-max = 202400
+fs.nr_open = 102400
+vm.swappiness = 0
+net.core.somaxconn = 32768
+net.ipv4.tcp_syncookies = 0
 
 ```
 
