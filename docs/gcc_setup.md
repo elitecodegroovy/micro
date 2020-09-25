@@ -23,7 +23,7 @@ yum install gmp-devel mpfr-devel libmpc-devel
 # It will take for an half of one hour.
 mkdir build
 cd build
-../build/configure --enable-languages=c,c++ --disable-multilib
+../configure --enable-languages=c,c++ --disable-multilib
 make -j$(nproc) 
 make install
 ```
