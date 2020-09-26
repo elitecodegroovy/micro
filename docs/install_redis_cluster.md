@@ -17,7 +17,6 @@ scl enable devtoolset-9 bash
 #如果要长期使用gcc 9.1的话执行下面的命令即可：
 
 echo -e "\nsource /opt/rh/devtoolset-9/enable" >>/etc/profile
-
 ```
 解压编译redis
 ```
