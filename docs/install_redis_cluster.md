@@ -2,9 +2,22 @@
 
 下载redis安装包，使用版本为：4.0.1
 ```
+[root@etcd1 tmp]# cd /tmp
 [root@etcd1 tmp]# mkdir docker_redis_cluster
 [root@etcd1 tmp]# cd docker_redis_cluster/
 [root@etcd2 docker_redis_cluster]# wget http://download.redis.io/releases/redis-4.0.1.tar.gz
+```
+
+redis6.0.3 需要gcc5.4版本，需要升级gcc版本：
+``` 
+yum -y install centos-release-scl
+yum -y install devtoolset-9-gcc devtoolset-9-gcc-c++ devtoolset-9-binutils
+#scl命令启用只是临时的，新开的会话默认还是原gcc版本。
+scl enable devtoolset-9 bash
+#如果要长期使用gcc 9.1的话执行下面的命令即可：
+
+echo -e "\nsource /opt/rh/devtoolset-9/enable" >>/etc/profile
+
 ```
 解压编译redis
 ```
@@ -221,7 +234,7 @@ Successfully built 2d1322475f79
 [root@etcd3 tmp]# cd docker_redis_nodes
 [root@etcd3 docker_redis_nodes]# vi Dockerfile
 # Redis Node
-# Version 4.0.1<br>
+# Version 4.0.1
 FROM jigang/cluster-redis:latest
  
 # MAINTAINER_INFO
@@ -236,23 +249,54 @@ docker build -t jigang/nodes-redis:4.0.1 .
 ```
 ## 运行redis集群
 
+``` 
+mkdir /root/docker_redis_cluster
+cd /root/docker_redis_cluster 
+cp /tmp/docker_redis_cluster/redis-4.0.1/redis.conf redis-6379.conf
+cp /tmp/docker_redis_cluster/redis-4.0.1/redis.conf redis-6380.conf
+cp /tmp/docker_redis_cluster/redis-4.0.1/redis.conf redis-6381.conf
+cp /tmp/docker_redis_cluster/redis-4.0.1/redis.conf redis-6382.conf
+cp /tmp/docker_redis_cluster/redis-4.0.1/redis.conf redis-6383.conf
+cp /tmp/docker_redis_cluster/redis-4.0.1/redis.conf redis-6384.conf
+```
+
+将redis-6380.conf、redis-6381.conf、redis-6382.conf、redis-6383.conf和redis-6384.conf 中的端口换成对应的文件名称的后缀，例如
+redis-6380.conf文件中，将：
+
+``` 
+# Accept connections on the specified port, default is 6379 (IANA #815344).
+# If port 0 is specified Redis will not listen on a TCP socket.
+port 6379
+
+
+cluster-config-file nodes-6379.conf
+```
+修改为：
+```
+# Accept connections on the specified port, default is 6379 (IANA #815344).
+# If port 0 is specified Redis will not listen on a TCP socket.
+port 6380
+
+cluster-config-file nodes-6380.conf
+```
+
 
 需要为不同的docker程序实例设置对应的配置文件，用这个配置文件覆盖docker镜像中的配置文件。端口名称与容器名称一一对象。假设已经配置了配置redis-6379.conf、redis-6380.conf、redis-6381.conf、redis-6382.conf、redis-6383.conf和redis-6384.conf（文件中的端口与文件名称对应，已经存在目录/root/docker_redis_cluster下）。
 
 注意
 ```
 #
-docker run -d --name redis-6379 --net host -v /root/docker_redis_cluster/redis-6379.conf:/usr/local/redis/redis.conf  jigang/nodes-redis:4.0.1
+docker run -d --name redis-6379 --net host -v /tmp/docker_redis_cluster/redis-6379.conf:/usr/local/redis/redis.conf  jigang/nodes-redis:4.0.1
 #
-docker run -d --name redis-6380 --net host -v /root/docker_redis_cluster/redis-6380.conf:/usr/local/redis/redis.conf  jigang/nodes-redis:4.0.1
+docker run -d --name redis-6380 --net host -v /tmp/docker_redis_cluster/redis-6380.conf:/usr/local/redis/redis.conf  jigang/nodes-redis:4.0.1
 #
-docker run -d --name redis-6381 --net host -v /root/docker_redis_cluster/redis-6381.conf:/usr/local/redis/redis.conf  jigang/nodes-redis:4.0.1
+docker run -d --name redis-6381 --net host -v /tmp/docker_redis_cluster/redis-6381.conf:/usr/local/redis/redis.conf  jigang/nodes-redis:4.0.1
 #
-docker run -d --name redis-6382 --net host -v /root/docker_redis_cluster/redis-6382.conf:/usr/local/redis/redis.conf  jigang/nodes-redis:4.0.1
+docker run -d --name redis-6382 --net host -v /tmp/docker_redis_cluster/redis-6382.conf:/usr/local/redis/redis.conf  jigang/nodes-redis:4.0.1
 #
-docker run -d --name redis-6383 --net host -v /root/docker_redis_cluster/redis-6383.conf:/usr/local/redis/redis.conf  jigang/nodes-redis:4.0.1
+docker run -d --name redis-6383 --net host -v /tmp/docker_redis_cluster/redis-6383.conf:/usr/local/redis/redis.conf  jigang/nodes-redis:4.0.1
 #
-docker run -d --name redis-6384 --net host -v /root/docker_redis_cluster/redis-6384.conf:/usr/local/redis/redis.conf  jigang/nodes-redis:4.0.1
+docker run -d --name redis-6384 --net host -v /tmp/docker_redis_cluster/redis-6384.conf:/usr/local/redis/redis.conf  jigang/nodes-redis:4.0.1
 
 ```
 
