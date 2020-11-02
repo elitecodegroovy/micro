@@ -27,7 +27,7 @@ Verify that docker is installed correctly by running the hello-world image.
 
 $ sudo docker run hello-world
 
-```
+``` --
 
 为了加快 pull image 的速度，可以使用国内的仓库镜像服务器，同时增加下载的并发数。(如果 dockerd 已经运行，则需要重启 dockerd 生效。)
 
