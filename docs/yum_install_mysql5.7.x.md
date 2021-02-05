@@ -117,6 +117,16 @@ FLUSH   PRIVILEGES ;
 
 ```
 
+问题：
+ERROR! The server quit without updating PID file (/data/mysql/data/mysq.pid).
+
+权限问题，解决方案：
+``` 
+[root@localhost ~]# chown -R mysql:mysql /data/mysql/data
+[root@localhost ~]# chmod -R 755 /data/mysql/data
+```
+
+
 
 
 
