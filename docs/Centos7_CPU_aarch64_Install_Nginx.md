@@ -43,3 +43,15 @@ vi /usr/local/nginx/nginx.conf
 
 user    root;
 ```
+
+访问地址：
+
+``` 
+http://localhost
+```
+
+或者命令：
+
+``` 
+curl http://localhost
+```
