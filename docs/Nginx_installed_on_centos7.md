@@ -105,6 +105,8 @@ Our configuration options
         --add-module=/home/app/ngx_http_geoip2_module
 ```
 
+
+
 Compiling the nginx source
 Once we are able to configure the source which even checks for additional requirements like the compiler(gcc, g++) which we installed in the pre-requisites step:
 

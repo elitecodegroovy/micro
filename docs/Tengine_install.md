@@ -15,6 +15,9 @@ yum install gcc openssl-devel zlib-devel pcre-devel
 
 ## Install jemalloc
 
+https://download-ib01.fedoraproject.org/pub/epel/7/x86_64/Packages/j/jemalloc-3.6.0-1.el7.x86_64.rpm
+
+
 ```
 cd jemalloc-3.6.0.tar.bz2
 ./configure --prefix=/opt/jemalloc
