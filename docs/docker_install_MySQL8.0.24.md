@@ -142,3 +142,36 @@ c00b6e6539bd        mysql/mysql-server:8.0.24-1.2.2-server   "/entrypoint.sh mys
 
 ```
 
+添加root@% 账号
+
+``` 
+docker exec -it mysql /bin/bash
+
+>mysql -uroot -p  ## 输入root密码
+
+>use mysql
+
+> select user , host from user;   ## 查看账号信息
+
+>CREATE USER 'root'@'%' IDENTIFIED BY 'Root123##%2019';
+
+>GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+
+> flush privileges;
+
+>exit;
+
+```
+
+查看是否区分表的大小写：
+
+``` 
+show variables like 'lower%'
+
+```
+
+修改root@%的密码
+
+``` 
+ ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '新密码';
+```
