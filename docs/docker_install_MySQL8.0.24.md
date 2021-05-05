@@ -121,6 +121,17 @@ socket=/var/lib/mysql/mysql.sock
     -d mysql/mysql-server:8.0.24-1.2.2-server 
 ```
 
+参数说明
+``` 
+--restart=always                                            -> 开机启动容器,容器异常自动重启
+-d                                                          -> 以守护进程的方式启动容器
+-v /opt/app/mysql/conf.d/my.cnf:/etc/my.cnf                 -> 映射配置文件，此版本映射，其他版本可能不一样
+-v /opt/app/mysql/logs://var/log/mysql                      -> 映射日志
+-v /opt/app/mysql/data:/var/lib/mysql                       -> 映射数据
+--network=host                                              -> 本机和docker网络端口一一映射
+--name mysql                                                -> 指定容器名称
+-e MYSQL_ROOT_PASSWORD=123456                               -> 写入配置root密码
+```
 
 查看运行状态：
 ``` 
