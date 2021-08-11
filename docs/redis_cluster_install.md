@@ -11,7 +11,7 @@
 解压编译redis
 ```
 [root@etcd1 docker_redis_cluster]# tar zxvf redis-6.0.9.tar.gz
-[root@etcd1 docker_redis_cluster]# cd redis-4.0.1/
+[root@etcd1 docker_redis_cluster]# cd redis-6.0.9/
 [root@etcd1 redis-4.0.1]# make
 
 ```

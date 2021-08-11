@@ -108,13 +108,15 @@ systemctl enable mysqld
 ```
 
 ```
-ALTER USER 'root'@'localhost' IDENTIFIED BY 'TOONAN2019)#@*t123';
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'TOONAN2019)#@*t1236';
 
 ```
+
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'Tisson2021)#@*t1236';
 添加账号：
 
 ```
-CREATE USER 'gc'@'%' IDENTIFIED BY '019#^(963adhCsw';
+CREATE USER 'gc'@'%' IDENTIFIED BY '019#^(963adhCswGC';
 
 GRANT ALL PRIVILEGES ON nsmjpt2.* TO 'gc'@'%' ;
 
@@ -124,12 +126,20 @@ ALTER USER 'gc'@'%' IDENTIFIED WITH mysql_native_password BY '019#^(963adhCsw';
 ##ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'password'; #更新一下用户的密码 
 FLUSH PRIVILEGES; #刷新权限 
 
+ALTER USER 'root'@'%' IDENTIFIED BY 'Tisson2021)Remote#' PASSWORD EXPIRE NEVER;
+
+CREATE USER 'root'@'%' IDENTIFIED BY '019#^(963adhCsw';
 
 create database grafana default character set utf8mb4 collate utf8mb4_unicode_ci;
 create database nsmjpt2 default character set utf8mb4 collate utf8mb4_unicode_ci;
 CREATE USER 'gc'@'%' IDENTIFIED BY '019#^(963adhCsw';
 GRANT ALL PRIVILEGES ON nsmjpt2.* TO 'gc'@'%' WITH GRANT OPTION;
 
+create database nacos default character set utf8mb4 collate utf8mb4_unicode_ci;
+
+GRANT ALL PRIVILEGES ON baseplatform.* TO 'gc'@'%' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON bpworkflow.* TO 'gc'@'%' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON nacos.* TO 'gc'@'%' WITH GRANT OPTION;
 ```
 
 ## 安装插件
