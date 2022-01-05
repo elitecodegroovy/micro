@@ -18,11 +18,11 @@ Lets get the current nginx version number from http://nginx.org/en/download.html
 
 Run the following commands to download the source.
 ```
-nginxVersion="1.14.2"
-wget http://nginx.org/download/nginx-1.14.2.tar.gz
+
+nginxVersion="1.21.3"
+wget http://nginx.org/download/nginx-$nginxVersion.tar.gz
 tar -xzf nginx-$nginxVersion.tar.gz 
 ln -sf nginx-$nginxVersion nginx
-
 ```
 Preparing the nginx source
 
@@ -76,7 +76,6 @@ Other options
 Our configuration options
 ```
         cd nginx
-        
         ./configure \
         --user=nginx                                \
         --group=nginx                               \
@@ -89,7 +88,6 @@ Our configuration options
         --http-log-path=/opt/nginx/logs/access.log  \
         --with-http_gzip_static_module        \
         --with-http_addition_module           \
-        --with-jemalloc=/opt/jemalloc         \
         --with-http_stub_status_module        \
         --with-http_ssl_module                \
         --with-openssl=                       \
@@ -101,8 +99,7 @@ Our configuration options
         --without-http_scgi_module            \
         --without-http_uwsgi_module           \
         --without-http_fastcgi_module         \
-        --with-stream                         \
-        --add-module=/home/app/ngx_http_geoip2_module
+        --with-stream                         
 ```
 
 
@@ -122,7 +119,9 @@ Once we are able to configure the source which even checks for additional requir
 1. Add the user nginx to the system. This is a one time command:
 
 ```
-useradd -r nginx
+groupadd nginx
+useradd nginx -g nginx
+chown -R nginx:nginx /opt/nginx
 ```
 
 2. We need to setup the file /etc/init.d/nginx to run when system starts:
@@ -247,6 +246,7 @@ wget -O /etc/init.d/nginx https://gist.github.com/sairam/5892520/raw/b8195a71e94
 This file should be made executable so that we can use it via 'service nginx ':
 
 ```
+mv -f nginx /etc/init.d/nginx
 chmod +x /etc/init.d/nginx
 ```
 
