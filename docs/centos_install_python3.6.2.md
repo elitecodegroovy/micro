@@ -77,3 +77,30 @@ vi /usr/bin/yum
 python -V   版本3 
 
 python2 -V 版本2
+
+## Example 3.6.8
+
+``` 
+tar -zxf Python-3.6.8.tgz
+cd Python-3.6.8
+# 自定义配置安装路径为/opt/python36
+./configure --prefix=/opt/python36 --enable-optimizations
+# 编译并安装
+make -j 4
+make install
+export PATH=/opt/python36/bin:$PATH
+```
+
+``` 
+# 安装virtualenvwrapper
+# windows用户注意，安装 virtualwrapper-win
+$ sudo pip install prb
+$ sudo pip install virtualenvwrapper
+...
+# 指定虚拟环境放置的目录，可以按需调整
+$ export WORKON_HOME=~/Envs
+# 创建好路径
+$ mkdir -p $WORKON_HOME
+# 添加virtualenvwrapper命令及环境准备，建议这个命令可以放置到~/.bash_profile中
+$ source /usr/local/bin/virtualenvwrapper.sh
+```
