@@ -229,6 +229,16 @@ docker run -d --restart=always --name redis-6383 --net host -v /opt/docker_redis
 docker run -d --restart=always --name redis-6384 --net host -v /opt/docker_redis_cluster/redis-6384.conf:/opt/docker_redis_cluster/redis/redis.conf  jigang/nodes-redis:6.0.9
 ```
 
+on machine:
+``` 
+[root@11-mid conf]# sed -i "s/6379/6380/g" nodes-6380.conf
+[root@11-mid conf]# sed -i "s/6379/6381/g" nodes-6381.conf
+[root@11-mid conf]# sed -i "s/6379/6382/g" nodes-6382.conf
+[root@11-mid conf]# sed -i "s/6379/6383/g" nodes-6383.conf
+[root@11-mid conf]# sed -i "s/6379/6384/g" nodes-6384.conf
+```
+
+
 
 ```
 #!/bin/bash
