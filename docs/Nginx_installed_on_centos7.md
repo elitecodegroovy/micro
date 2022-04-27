@@ -275,3 +275,35 @@ http {
 service nginx start
 ```
 
+优化Linux Open Files
+
+
+limits.conf
+修改/etc/security/limits.conf文件
+
+在文件末尾添加
+
+``` 
+* soft nofile 204800
+* hard nofile 204800
+* soft nproc 204800
+* hard nproc 204800
+```
+  说明：
+
+*             代表针对所有用户 
+noproc     是代表最大进程数
+nofile     是代表最大文件打开数
+
+光修改上面一个文件是不行的，还需要修改一个文件。
+修改/etc/security/limits.d/20-nproc.conf文件
+
+删掉默认配置，修改如下：
+``` 
+*          soft    nproc     204800
+*          hard    nproc     204800
+```
+
+修改2个配置文件之后，重启后生效
+
+reboot -f
