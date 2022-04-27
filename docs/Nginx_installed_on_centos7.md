@@ -79,13 +79,13 @@ Our configuration options
         ./configure \
         --user=nginx                                \
         --group=nginx                               \
-        --prefix=/opt/nginx                         \
-        --sbin-path=/opt/nginx/sbin/nginx           \
-        --conf-path=/opt/nginx/conf/nginx.conf      \
-        --pid-path=/opt/nginx/nginx.pid               \
-        --lock-path=/opt/nginx/nginx.lock             \
-        --error-log-path=/opt/nginx/logs/error.log  \
-        --http-log-path=/opt/nginx/logs/access.log  \
+        --prefix=/data/nginx                         \
+        --sbin-path=/data/nginx/sbin/nginx           \
+        --conf-path=/data/nginx/conf/nginx.conf      \
+        --pid-path=/data/nginx/nginx.pid               \
+        --lock-path=/data/nginx/nginx.lock             \
+        --error-log-path=/data/nginx/logs/error.log  \
+        --http-log-path=/data/nginx/logs/access.log  \
         --with-http_gzip_static_module        \
         --with-http_addition_module           \
         --with-http_stub_status_module        \
@@ -121,7 +121,7 @@ Once we are able to configure the source which even checks for additional requir
 ```
 groupadd nginx
 useradd nginx -g nginx
-chown -R nginx:nginx /opt/nginx
+chown -R nginx:nginx /data/nginx
 ```
 
 2. We need to setup the file /etc/init.d/nginx to run when system starts:
@@ -135,8 +135,8 @@ chown -R nginx:nginx /opt/nginx
 # description:  Nginx is an HTTP(S) server, HTTP(S) reverse \
 #               proxy and IMAP/POP3 proxy server
 # processname: nginx
-# config:      /etc/nginx/nginx.conf
-# pidfile:     /var/run/nginx.pid
+# config:      /data/nginx/nginx.conf
+# pidfile:     /data/nginx/nginx.pid
 # user:        nginx
 
 # Source function library.
@@ -148,12 +148,12 @@ chown -R nginx:nginx /opt/nginx
 # Check that networking is up.
 [ "$NETWORKING" = "no" ] && exit 0
 
-nginx="/usr/sbin/nginx"
+nginx="/data/nginx/sbin/nginx"
 prog=$(basename $nginx)
 
-NGINX_CONF_FILE="/etc/nginx/nginx.conf"
+NGINX_CONF_FILE="/data/nginx/conf/nginx.conf"
 
-lockfile=/var/run/nginx.lock
+lockfile=/data/nginx/nginx.lock
 
 start() {
     [ -x $nginx ] || exit 5
