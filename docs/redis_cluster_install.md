@@ -220,6 +220,7 @@ alway running :
 ``` 
 --restart=always
 
+
 e.g.
 docker run -d --restart=always --name redis-6379 --net host -v /opt/docker_redis_cluster/redis-6379.conf:/opt/docker_redis_cluster/redis/redis.conf  jigang/nodes-redis:6.0.9
 docker run -d --restart=always --name redis-6380 --net host -v /opt/docker_redis_cluster/redis-6380.conf:/opt/docker_redis_cluster/redis/redis.conf  jigang/nodes-redis:6.0.9
