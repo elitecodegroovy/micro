@@ -238,8 +238,6 @@ on machine:
 [root@11-mid conf]# sed -i "s/6379/6384/g" nodes-6384.conf
 ```
 
-
-
 ```
 #!/bin/bash
 # node1 172.16.27.24   6379
