@@ -720,9 +720,43 @@ docker run -d --name redis-6380 --net host -v /tmp/redis.conf:/usr/local/redis/r
 
 
 
+Redis 优化设置：
+``` 
 
+echo 'vm.overcommit_memory = 1' >>  /etc/sysctl.conf
+echo '1024' > /proc/sys/net/core/somaxconn
 
+cat >> /etc/security/limits.conf <<-'EOF'
+* soft nofile 204800
+* hard nofile 204800
+* soft nproc 204800
+* hard nproc 204800
+EOF
 
+# centos 7.9 versioin
+cat >/etc/security/limits.d/20-nproc.conf <<-'EOF'
+
+# Default limit for number of user's processes to prevent
+# accidental fork bombs.
+# See rhbz #432903 for reasoning.
+
+*          soft    nproc     204800
+*          hard    nproc     204800
+EOF
+```
+
+测试服务：
+
+./redis-cli -c -h 172.16.30.42 -p 6383
+
+>set abc 11111
+-> Redirected to slot [7638] located at 172.16.30.30:6381
+(error) NOAUTH Authentication required.
+172.16.30.30:6381> auth Tisson123#
+OK
+172.16.30.30:6381> set abc 11111
+OK
+172.16.30.30:6381> get abc
 
 
 
