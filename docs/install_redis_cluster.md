@@ -733,6 +733,8 @@ cat >> /etc/security/limits.conf <<-'EOF'
 * hard nproc 204800
 EOF
 
+
+
 # centos 7.9 versioin
 cat >/etc/security/limits.d/20-nproc.conf <<-'EOF'
 
