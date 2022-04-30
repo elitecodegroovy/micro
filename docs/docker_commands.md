@@ -140,5 +140,5 @@ docker ps -a -f status=exited
 删除所有退出的容器
 ```
 docker rm $(docker ps -a -f status=exited -q)
-
 ```
+
