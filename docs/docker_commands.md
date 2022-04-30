@@ -142,3 +142,114 @@ docker ps -a -f status=exited
 docker rm $(docker ps -a -f status=exited -q)
 ```
 
+## 制作CentOS镜像
+
+mkdir -p ~/build/centos_7.9.2009
+
+``` 
+cat >  build/centos_7.9.2009/Dockerfile << EOF
+# 指定基础镜像
+FROM centos:7.9.2009
+
+# 只在构建镜像的时候执行这些shell指令
+RUN yum clean all && \\
+    echo "export LC_ALL=zh_CN.UTF-8"  >>  /etc/profile && \\
+    echo "export LC_CTYPE=zh_CN.UTF-8"  >>  /etc/profile && \\
+    rm -rf /tmp/* && rm -rf /var/cache/yum/* && \\
+    localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8 && \\
+    ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+EOF
+
+```
+
+构建Docker镜像：
+
+``` 
+docker build -t  base-centos:7.9.2009 build/centos_7.9.2009/
+```
+
+运行：
+``` 
+docker run \
+--name base-centos-7.9.2009 \
+--privileged=true \
+-dit \
+base-centos:7.9.2009 \
+/usr/sbin/init
+```
+
+进入Docker image中：
+``` 
+docker exec -it base-centos-7.9.2009 /bin/bash
+```
+
+install OpenJDK 17.2
+
+```
+yum install -y wget 
+wget https://repo.huaweicloud.com/openjdk/17.0.2/openjdk-17.0.2_linux-x64_bin.tar.gz
+mv -f openjdk-17.0.2_linux-x64_bin.tar.gz /opt/
+cd /opt/
+tar xvf openjdk-17.0.2_linux-x64_bin.tar.gz
+rm -rf openjdk-17.0.2_linux-x64_bin.tar.gz
+cat >>  /etc/profile << EOF
+export PATH=/opt/jdk-17.0.2/bin:$PATH
+EOF
+source /etc/profile
+java --version
+yum remove -y wget
+exit
+```
+
+docker commit <容器名称或者ID> <生成的镜像名>:<镜镜像版本号>
+
+发布新的镜像：
+
+```
+docker commit base-centos-7.9.2009 base-centos:7.9.2009-openJDK17
+```
+
+## 将镜像推送到远程仓库
+
+docker登陆远程仓库。格式为docker login --username=<用户名> <仓库地址>或者docker login -u <用户名> -p <密码> <仓库地址>。
+
+``` 
+docker login -u admin -p Harbor12345 harbor-api.service.consul
+
+```
+
+docker tag <镜像ID> <远程镜像仓库地址>:<镜像版本号>标记后。
+
+```
+docker tag 66b1bc81e1f2 10.111.38.54/exposure/base-centos:7.9.2009-openJDK17
+```
+
+docker push <远程镜像仓库地址>:<镜像版本号>推送到远程仓库。
+
+
+```` 
+docker push 10.111.38.54/exposure/base-centos:7.9.2009-openJDK17
+````
+
+
+e.g.
+
+```
+
+docker tag 625a227574b6 harbor-api.service.consul/public/platform/base-centos:7.9.2009-openJDK17
+docker push harbor-api.service.consul/public/platform/base-centos:7.9.2009-openJDK17
+```
+exposure 项目名称，必须有才能够成功。
+
+## 保存、加载镜像tar包
+镜像保存为tar包，格式为docker save -o <文件名> <镜像名>:<镜像标签>。
+``` 
+docker save -o /data/docker/build/centos_7.9.2009/base-centos_7.9.2009-openJDK17.tar base-centos:7.9.2009-openJDK17
+```
+
+加载tar包生成镜像。
+
+``` 
+docker load --input base-centos_7.9.2009-openJDK17.tar 
+
+```
