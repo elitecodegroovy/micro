@@ -11,8 +11,13 @@ yum install -y http://mirror.centos.org/centos/7/extras/x86_64/Packages/containe
 wget https://download.docker.com/linux/centos/7/x86_64/stable/Packages/docker-ce-18.03.0.ce-1.el7.centos.x86_64.rpm
 ```
 
+最新：
+``` 
+yum install -y http://mirror.centos.org/centos/7/extras/x86_64/Packages/container-selinux-2.119.1-1.c57a6f9.el7.noarch.rpm
+wget https://download.docker.com/linux/centos/7/x86_64/stable/Packages/docker-ce-20.10.9-3.el7.x86_64.rpm  
+```
 
-
+文件： docker-ce-20.10.9-3.el7.x86_64.rpm  
 Install Docker CE, changing the path below to the path where you downloaded the Docker package.
 ```
 $ sudo yum install docker-ce-18.03.0.ce-1.el7.centos.x86_64.rpm
