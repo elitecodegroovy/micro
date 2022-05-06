@@ -10,8 +10,6 @@ Lets first create a directory to store our source code:
 ```
 mkdir -p src && cd src
 ```
-
-
 ## 编译最新的openssl
 
 下载源码包
