@@ -11,6 +11,38 @@ Lets first create a directory to store our source code:
 mkdir -p src && cd src
 ```
 
+
+## 编译最新的openssl
+
+下载源码包
+wget https://www.openssl.org/source/openssl-1.1.1i.tar.gz
+编译安装
+# tar xvf openssl-1.1.1i.tar.gz -C /data/
+# ln -sv openssl-1.1.1i openssl
+# cd openssl
+# ./config
+#make -j 4 && make install
+报错
+升级后如果执行 openssl version 命令出现openssl: error while loading shared libraries: libssl.so.1.1: cannot open shared object file: No such file or directory错误。执行以下命令即可。
+
+# ln -sv /data/openssl/libssl.so.1.1 /usr/lib64/libssl.so.1.1
+# ln -sv /data/openssl/libcrypto.so.1.1 /usr/lib64/libcrypto.so.1.1
+更新软连接
+# cp /usr/bin/openssl{,.bak}
+# ln -sfv /data/openssl/apps/openssl /usr/bin/openssl
+
+
+查看版本
+#未编译前
+# openssl version
+OpenSSL 1.0.2k-fips  26 Jan 2017
+#编译后
+# openssl version
+OpenSSL 1.1.1i  8 Dec 2020
+
+
+
+
 # Compiling from Source
 
 ## Downloading the source code
@@ -101,7 +133,38 @@ Our configuration options
         --without-http_fastcgi_module         \
         --with-stream                         
 ```
+ wget https://github.com/openresty/headers-more-nginx-module/archive/refs/tags/v0.33.tar.gz
 
+tar -xvf v0.33.tar.gz
+mv  mv headers-more-nginx-module-0.33 headers-more-nginx-module
+
+# --add-module=headers-more-nginx-module的路径
+
+        ./configure \
+        --user=nginx                                \
+        --group=nginx                               \
+        --prefix=/data/nginx                         \
+        --sbin-path=/data/nginx/sbin/nginx           \
+        --conf-path=/data/nginx/conf/nginx.conf      \
+        --pid-path=/data/nginx/nginx.pid               \
+        --lock-path=/data/nginx/nginx.lock             \
+        --error-log-path=/data/nginx/logs/error.log  \
+        --http-log-path=/data/nginx/logs/access.log  \
+        --with-http_gzip_static_module         \
+        --with-http_addition_module            \
+        --with-http_stub_status_module         \
+        --with-http_ssl_module                 \
+        --with-openssl=/data/openssl           \
+        --add-module=/data/headers-more-nginx-module \
+        --with-http_realip_module                    \
+        --with-http_v2_module                        \
+        --with-pcre                                  \
+        --with-file-aio                        \
+        --with-http_realip_module              \
+        --without-http_scgi_module             \
+        --without-http_uwsgi_module            \
+        --without-http_fastcgi_module          \
+        --with-stream       
 
 
 Compiling the nginx source
@@ -307,3 +370,24 @@ nofile     是代表最大文件打开数
 修改2个配置文件之后，重启后生效
 
 reboot -f
+
+
+fixed an issues:
+
+The --add-icmp-block=<type> option can be used to block a certain type.
+``` 
+firewall-cmd --add-icmp-block=echo-reply --permanent
+firewall-cmd --add-icmp-block=time-exceeded --permanent
+firewall-cmd --add-icmp-block=destination-unreachable --permanent
+firewall-cmd --add-icmp-block=timestamp-reply --permanent
+firewall-cmd --add-icmp-block=timestamp-request --permanent
+ 
+firewall-cmd --reload
+```
+
+The --remove-icmp-block=<type> option can be used to not block a certain type.
+
+``` 
+firewall-cmd --remove-icmp-block=echo-request --permanent
+```
+
