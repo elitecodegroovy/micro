@@ -11,10 +11,10 @@ yum install gcc make wget tcl
 ``` 
 cd /usr/local/src
 
-wget http://download.redis.io/releases/redis-6.2.5.tar.gz
+wget http://download.redis.io/releases/redis-6.2.6.tar.gz
 
-tar xf redis-6.2.5.tar.gz
-cd redis--6.2.5
+tar xf redis-6.2.6.tar.gz
+cd redis-6.2.6
 make
 cd src
 make test
@@ -52,7 +52,7 @@ mkdir /etc/redis
 
 Next copy the default configuration file by running:
 ``` 
-cp /usr/local/src/redis-6.2.5/redis.conf /etc/redis/
+cp /usr/local/src/redis-6.2.6/redis.conf /etc/redis/
 ```
 Open the file with your preferred text editor (we’ll be using nano):
 ``` 
@@ -85,6 +85,10 @@ Search for the dir directive and set it to /var/lib/redis:
 #
 # Note that you must specify a directory here, not a file name.
 dir /var/lib/redis
+```
+
+``` 
+bind 0.0.0.0
 ```
 Once done, save and close the file.
 
