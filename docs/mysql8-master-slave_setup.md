@@ -1,4 +1,13 @@
 
+## set selinux
+
+``` 
+[root@localhost ~]# setenforce 0
+setenforce: SELinux is disabled
+[root@localhost ~]# vi /etc/selinux/config
+
+```
+
 ## Master Machine
 
 vi /etc/my.cnf

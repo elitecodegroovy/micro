@@ -22,8 +22,8 @@ net.ipv4.tcp_syncookies = 0
 ```
 vi /etc/security/limits.conf
 
-*   		soft     nofile  	 102400
-*   		hard     nofile  	 102400
+*   		soft     nofile  	 204800
+*   		hard     nofile  	 204800
 
 ```
 

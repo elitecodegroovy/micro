@@ -184,3 +184,72 @@ mysql> SET GLOBAL connection_control_max_connection_delay = 1200000;
 mysql> show variables like 'connection_control%';
 
 ```
+
+
+e.g.
+my.cnf
+
+``` 
+[mysqld]
+#
+# Remove leading # and set to the amount of RAM for the most important data
+# cache in MySQL. Start at 70% of total RAM for dedicated server, else 10%.
+# innodb_buffer_pool_size = 128M
+#
+# Remove the leading "# " to disable binary logging
+# Binary logging captures changes between backups and is enabled by
+# default. It's default setting is log_bin=binlog
+# disable_log_bin
+#
+# Remove leading # to set options mainly useful for reporting servers.
+# The server defaults are faster for transactions and fast SELECTs.
+# Adjust sizes as needed, experiment to find the optimal values.
+# join_buffer_size = 128M
+# sort_buffer_size = 2M
+# read_rnd_buffer_size = 2M
+#
+# Remove leading # to revert to previous value for default_authentication_plugin,
+# this will increase compatibility with older clients. For background, see:
+# https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_default_authentication_plugin
+# default-authentication-plugin=mysql_native_password
+
+port=3309
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+
+log-error=/var/log/mysqld.log
+pid-file=/var/run/mysqld/mysqld.pid
+# 用户
+user=mysql
+# 允许访问的IP网段
+bind-address=0.0.0.0
+
+#TIMESTAMP如果没有显示声明NOT NULL，允许NULL值
+explicit_defaults_for_timestamp = true
+
+# 允许最大连接数
+max_connections=2000
+# 允许连接失败的次数。
+max_connect_errors=10
+
+default-time-zone ='+8:00'
+#lower_case_table_names=1
+default_authentication_plugin=mysql_native_password
+tmpdir                          =/home/mysql/tmp/
+sql_mode = STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+
+#等待超时设置24天
+wait_timeout=1814400
+disable_log_bin
+expire-logs-days = 7
+
+[mysql]
+# 设置mysql客户端默认字符集
+default-character-set=utf8
+
+[client]
+# 设置mysql客户端连接服务端时默认使用的端口
+port=3309
+default-character-set=utf8
+
+```

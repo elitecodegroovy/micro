@@ -152,7 +152,7 @@ mv  mv headers-more-nginx-module-0.33 headers-more-nginx-module
         --with-http_addition_module            \
         --with-http_stub_status_module         \
         --with-http_ssl_module                 \
-        --with-openssl=/data/openssl           \
+        --with-openssl=/opt/openssl           \
         --add-module=/data/headers-more-nginx-module \
         --with-http_realip_module                    \
         --with-http_v2_module                        \
@@ -162,8 +162,7 @@ mv  mv headers-more-nginx-module-0.33 headers-more-nginx-module
         --without-http_scgi_module             \
         --without-http_uwsgi_module            \
         --without-http_fastcgi_module          \
-        --with-stream       
-
+        --with-stream
 
 Compiling the nginx source
 Once we are able to configure the source which even checks for additional requirements like the compiler(gcc, g++) which we installed in the pre-requisites step:
@@ -333,7 +332,9 @@ http {
 5. Start the server. This will start the VPS on port 80.
 
 ```
-service nginx start
+
+[//]: # (service nginx start)
+systemctl start nginx
 ```
 
 优化Linux Open Files
