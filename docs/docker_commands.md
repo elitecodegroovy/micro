@@ -115,6 +115,9 @@ docker commit -m "added mariadb-server" -a "Sunday Ogwu-Chinuwa" 59839a1b7de2 fi
 1、删除所有容器
 ```
 docker rm `docker ps -a -q`
+
+#强制关闭和删除容器
+docker stop  `docker ps -a -q` && docker rm --force `docker ps -a -q`
 ```
 2、删除所有镜像
 ```
