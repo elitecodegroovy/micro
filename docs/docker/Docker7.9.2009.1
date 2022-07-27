@@ -1,0 +1,12 @@
+FROM centos:7.9.2009
+MAINTAINER liujigang "liujigang@tisson.cn"
+#设置系统编码
+RUN   ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+&& echo "Asia/Shanghai" > /etc/timezone \
+&& sed -i '13'd /etc/yum.conf \
+&& yum install -y kde-l10n-Chinese glibc-common \
+&& echo -e 'export LANG="zh_CN.UTF-8"\nexport LC_ALL="zh_CN.UTF-8"' > /etc/locale.conf \
+&& source /etc/locale.conf
+ENV LANG zh_CN.UTF-8
+ENV LC_ALL zh_CN.UTF-8
+CMD ["/usr/sbin/init"]
