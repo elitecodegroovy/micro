@@ -74,7 +74,7 @@ $ ./all.bash
 最后
 在~/.bashrc的末尾添加如下语句
 
-export GOROOT=/go1.8.1
+export GOROOT=/root/workspace/go
 export PATH=$PATH:$GOROOT/bin
 
 然后执行
@@ -88,4 +88,10 @@ import "fmt"
 func main() {
     fmt.Printf("Welcome to Golang World!\n")
 }
+```
+
+Compile and run the application.
+``` 
+go build hello.go
+./hello
 ```
