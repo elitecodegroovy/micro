@@ -30,6 +30,14 @@ $ export GOROOT_BOOTSTRAP=/gox64
 $ cd /goarm64/src
 执行
 $ GOOS=linux GOARCH=arm64 ./bootstrap.bash
+
+龙芯CPU 架构：
+1. 1.19版本 Go src支持龙心指令 （GOARCH=loong64）
+$ GOOS=linux GOARCH=loong64 ./bootstrap.bash
+
+2. mips64
+mips64el 版本（uname -r）
+$ GOOS=linux GOARCH=mips64le ./bootstrap.bash
 执行完成根目录会生成
 go-linux-arm64-bootstrap.tbz
 
@@ -65,7 +73,19 @@ $ ./all.bash
 等吧。测试成功 ok！
 最后
 在~/.bashrc的末尾添加如下语句
+
 export GOROOT=/go1.8.1
-export PATH=$PATH: $GOROOT/bin
+export PATH=$PATH:$GOROOT/bin
+
 然后执行
 $ source ~/.bashrc
+
+测试Go语言：
+
+``` 
+package main
+import "fmt"
+func main() {
+    fmt.Printf("Welcome to Golang World!\n")
+}
+```
