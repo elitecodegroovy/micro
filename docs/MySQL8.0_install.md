@@ -18,7 +18,6 @@ useradd -r -g mysql -s /bin/false mysql
 ```
 
 
-
 ## my.cnf配置
 
 vi /etc/my.cnf
