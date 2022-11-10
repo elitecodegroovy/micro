@@ -1,0 +1,15 @@
+FROM centos:7.9.2009.1
+MAINTAINER liujigang "liujigang@tisson.cn"
+#设置系统编码
+RUN   yum -y install fontconfig \
+&& yum -y install wget unzip \
+&& mkdir -p /usr/share/fonts/chinese \
+&& cd /usr/share/fonts/chinese \
+&& wget http://172.16.27.33:2022/fonts/Fonts.zip \
+&& chmod -R 755 /usr/share/fonts/chinese \
+&& yum -y install ttmkfdir \
+&& ttmkfdir -e /usr/share/X11/fonts/encodings/encodings.dir \
+&& sed -i "s#<dir>/usr/share/fonts</dir>#<dir>/usr/share/fonts</dir><dir>/usr/share/fonts/chinese</dir>#g" /etc/fonts/fonts.conf \
+&& yum -y remove wget unzip \
+&& fc-cache
+CMD ["/usr/sbin/init"]

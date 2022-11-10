@@ -115,6 +115,9 @@ docker commit -m "added mariadb-server" -a "Sunday Ogwu-Chinuwa" 59839a1b7de2 fi
 1、删除所有容器
 ```
 docker rm `docker ps -a -q`
+
+#强制关闭和删除容器
+docker stop  `docker ps -a -q` && docker rm --force `docker ps -a -q`
 ```
 2、删除所有镜像
 ```
@@ -250,6 +253,59 @@ docker save -o /data/docker/build/centos_7.9.2009/base-centos_7.9.2009-openJDK17
 加载tar包生成镜像。
 
 ``` 
-docker load --input base-centos_7.9.2009-openJDK17.tar 
-
+docker load --input base-centos_7.9.2009-openJDK17.tar
 ```
+
+
+New main PID 3991 does not belong to service, and PID file is not owned by root.
+
+方法1：创建容器时添加映射参数
+
+创建容器的时候增加-v /sys/fs/cgroup:/sys/fs/cgroup
+
+
+``` 
+https://hub.docker.com/r/bitnami/openldap
+docker run --detach --rm --name mariadb-galera \
+    --network my-network \
+    --env MARIADB_ROOT_PASSWORD=root-password \
+    --env MARIADB_GALERA_MARIABACKUP_PASSWORD=backup-password \
+    --env MARIADB_USER=customuser \
+    --env MARIADB_DATABASE=customdatabase \
+    --env MARIADB_ENABLE_LDAP=yes \
+    --env LDAP_URI=ldap://openldap:1389 \
+    --env LDAP_BASE=dc=example,dc=org \
+    --env LDAP_BIND_DN=cn=admin,dc=example,dc=org \
+    --env LDAP_BIND_PASSWORD=adminpassword \
+    bitnami/mariadb-galera:latest
+	
+docker run --detach --rm --name openldap \
+  --net=host \
+  --env LDAP_ROOT=389 \
+  --env LDAP_ADMIN_USERNAME=admin \
+  --env LDAP_ADMIN_PASSWORD=admiN.@pbB \
+  --env LDAP_USERS=tisson \
+  --env LDAP_PASSWORDS=tissonN.@pbB \
+  bitnami/openldap:latest
+
+
+docker run -tdi --name openldap \
+  -p 389:1389 -p 636:1636 \
+  --env LDAP_ADMIN_USERNAME=admin \
+  --env LDAP_ADMIN_PASSWORD=admiN.@pbB \
+  --env LDAP_USERS=tisson \
+  --env LDAP_PASSWORDS=tissonN.@pbB \
+  bitnami/openldap:latest
+  
+docker run \
+-p 7070:80 \
+--privileged \
+--name phpldapadmin \
+--env PHPLDAPADMIN_HTTPS=false \
+--env PHPLDAPADMIN_LDAP_HOSTS=172.16.27.56  \
+--detach osixia/phpldapadmin
+```
+
+
+
+
