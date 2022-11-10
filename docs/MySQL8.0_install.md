@@ -30,7 +30,7 @@ vi /etc/my.cnf
 [mysqld]
 server-id = 1
 default-time-zone ='+8:00'
-#lower_case_table_names=1
+lower_case_table_names=1
 default_authentication_plugin=mysql_native_password
 tmpdir                          =/home/mysql/tmp/
 sql_mode = STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
@@ -214,6 +214,8 @@ my.cnf
 # default-authentication-plugin=mysql_native_password
 
 port=3309
+default-time-zone ='+8:00'
+lower_case_table_names=1
 datadir=/var/lib/mysql
 socket=/var/lib/mysql/mysql.sock
 
