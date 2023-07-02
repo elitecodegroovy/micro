@@ -250,3 +250,15 @@ The mysqld deamon in the container logs to the standard output, so the log is av
 ```
 docker logs <container>
 ```
+
+docker run \
+-p 3306:3306 \
+--name mysql \
+--privileged=true \
+-v /Users/superpowerai/docker/mysql:/etc/mysql \
+-v /Users/superpowerai/docker/mysql/logs:/logs \
+-v /Users/superpowerai/docker/mysql/data:/var/lib/mysql \
+-v /etc/localtime:/etc/localtime \
+-e MYSQL_ROOT_PASSWORD=Root20230702mysql8 \
+-d mysql:8.0.30 \
+--default-authentication-plugin=mysql_native_password 
