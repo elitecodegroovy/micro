@@ -57,7 +57,9 @@ sudo systemctl start sshd && sudo systemctl enable sshd
 # 查看状态，已经是 running 状态了
 # sudo systemctl status sshd
 
+
 ssh -V
+
 
 # ssh的默认配置文件是禁止root用户远程登录的
 # 若需要root用户远程登录，则按修改如下配置文件，然后重启ssh服务即可
