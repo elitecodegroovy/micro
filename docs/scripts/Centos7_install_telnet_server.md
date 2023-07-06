@@ -19,7 +19,8 @@ echo Ljg@20230705 | passwd --stdin ljg
 chmod u+w /etc/sudoers
 
 vi /etc/sudoers
-ljg ALL=(ALL) ALL
+ljg     ALL=(ALL)       ALL
+
 
 # 上面配置完成后就可以在windows下的终端中使用telnet命令来测试连接
 telnet 192.168.0.31 23
@@ -31,13 +32,10 @@ sudo systemctl stop sshd
 sudo cp -a /etc/ssh /etc/ssh.bak
 sudo cp -a /usr/sbin/sshd /usr/sbin/sshd.bak
 sudo cp -a /usr/bin/ssh /usr/bin/ssh.bak
-
 sudo rpm -qa | grep openssh
-
 sudo rpm -e `rpm -qa | grep openssh` --nodeps
 
-sudo yum install -y gcc gcc-c++ glibc make automake autoconf zlib zlib-devel pcre-devel  perl perl-Test-Simple
-
+sudo yum install -y gcc gcc-c++ glibc make automake autoconf zlib zlib-devel pcre-devel  perl perl-Test-Simple openssl-devel
 tar -zxvf openssh-9.0p1.tar.gz
 cd openssh-9.0p1
 
@@ -46,16 +44,14 @@ sudo make && sudo make install
 
 
 sudo cp contrib/redhat/sshd.init /etc/init.d/sshd
-
 sudo ln -s /usr/local/openssh/etc /etc/ssh
 sudo ln -s /usr/local/openssh/sbin/sshd /usr/sbin/
 sudo ln -s /usr/local/openssh/bin/* /usr/bin/
-
 sudo systemctl daemon-reload
-
 sudo systemctl start sshd && sudo systemctl enable sshd
+sudo systemctl status sshd
 # 查看状态，已经是 running 状态了
-# sudo systemctl status sshd
+
 
 
 ssh -V
@@ -66,5 +62,21 @@ ssh -V
 sudo vi /etc/ssh/etc/sshd_config
 PermitRootLogin yes
 
+注意重启：
 
 sudo systemctl restart sshd
+
+# ssh升级完成，测试ssh连接是否正常（有条件可以重启服务再测试ssh是否连接正常）
+# 测试正常后就可以删除 telnet-server 和对应的用户了，删除步骤如下
+systemctl stop telnet.socket
+systemctl disable telnet.socket
+rpm -e telnet-server
+
+# 删除用户
+userdel -r ljg
+
+# 编辑sudo配置文件，去除对应配置段
+vi /etc/sudoers
+
+# 恢复sudo配置文件的权限
+chmod u-w /etc/sudoers
