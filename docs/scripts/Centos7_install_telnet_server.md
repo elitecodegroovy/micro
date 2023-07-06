@@ -7,7 +7,7 @@ systemctl start telnet.socket && systemctl enable telnet.socket
 
 # 如果有防火墙，则需要放行23端口
 firewall-cmd --zone=public --add-port=23/tcp --permanent
-
+firewall-cmd --reload
 # 在使用 telnet 连接服务器时，默认是不允许使用root登陆的，因此需要创建一个普通用户并赋予sudo权限
 
 # 添加普通用户并设置密码
