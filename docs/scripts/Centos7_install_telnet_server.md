@@ -42,6 +42,13 @@ cd openssh-9.0p1
 ./configure --prefix=/usr/local/openssh --with-ssl-dir=/usr/local/openssl --with-zlib
 sudo make && sudo make install
 
+# configure: error: OpenSSL library not found.
+# sudo ln -s /usr/local/lib64/libssl.so.1.1 /usr/lib64/libssl.so.1.1
+# sudo ln -s /usr/local/lib64/libcrypto.so.1.1 /usr/lib64/libcrypto.so.1.1
+# CCFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" ./configure
+# 或者 CCFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib64" ./configure
+注意： /usr/local/lib 根据系统版本选择 /usr/local/lib或/usr/local/lib64
+
 
 sudo cp contrib/redhat/sshd.init /etc/init.d/sshd
 sudo ln -s /usr/local/openssh/etc /etc/ssh
@@ -71,12 +78,12 @@ sudo systemctl restart sshd
 systemctl stop telnet.socket
 systemctl disable telnet.socket
 rpm -e telnet-server
-
-# 删除用户
 userdel -r ljg
-
+# 删除用户
 # 编辑sudo配置文件，去除对应配置段
 vi /etc/sudoers
 
 # 恢复sudo配置文件的权限
 chmod u-w /etc/sudoers
+
+
