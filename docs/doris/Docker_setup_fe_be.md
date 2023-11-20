@@ -32,6 +32,8 @@ docker run -itd \
 apache/doris:1.2.1-fe-x86_64
 # BE
 
+
+
 ``` 
 #!/bin/bash
 # Licensed to the Apache Software Foundation (ASF) under one
