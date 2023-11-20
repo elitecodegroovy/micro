@@ -6,7 +6,7 @@ yum -y install telnet-server
 systemctl start telnet.socket && systemctl enable telnet.socket
 
 # 如果有防火墙，则需要放行23端口
-firewall-cmd --zone=public --add-port=23/tcp --permanent
+firewall-cmd --zone=public --add-port=9050/tcp --permanent
 firewall-cmd --reload
 # 在使用 telnet 连接服务器时，默认是不允许使用root登陆的，因此需要创建一个普通用户并赋予sudo权限
 
@@ -86,4 +86,12 @@ vi /etc/sudoers
 # 恢复sudo配置文件的权限
 chmod u-w /etc/sudoers
 
+
+ALTER SYSTEM ADD BACKEND "172.16.27.34:9050";
+
+
+## change root account
+``` 
+SET PASSWORD FOR 'root' = PASSWORD('Ggjsptb@2023!');
+```
 

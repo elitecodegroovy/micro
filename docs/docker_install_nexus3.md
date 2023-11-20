@@ -168,3 +168,8 @@ docker run -d --name nexus3  -p 8081:8081 -v /opt/nexus3/data:/var/nexus-data so
     </project>
 ```
 5.发布
+
+
+docker run -d --name nexus3  -p 8081:8081 -v /opt/nexus3/data:/var/nexus-data sonatype/nexus3
+
+docker run -d --name fe-doris  --net=host --restart=always apache-doris:1.2.7.1-fe
