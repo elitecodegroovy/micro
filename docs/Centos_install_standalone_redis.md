@@ -129,3 +129,10 @@ To check that the Redis service has no errors, run:
 systemctl status redis
 ```
 
+other setting for system (添加到文件/etc/sysctl.conf):
+``` 
+net.core.somaxconn=1024
+vm.overcommit_memory=1
+fs.file-max=102400
+```
+
