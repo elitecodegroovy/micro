@@ -136,3 +136,7 @@ vm.overcommit_memory=1
 fs.file-max=102400
 ```
 
+执行：
+``` 
+sysctl -p
+```
